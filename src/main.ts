@@ -1,6 +1,9 @@
 import './style.css'
 import { isDebugMode } from './debug'
+import { renderDebugScreen } from './debug/screen'
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  ${isDebugMode ? '<h1>DEBUG MODE</h1>' : ''}
-`
+const app = document.querySelector<HTMLDivElement>('#app')!
+
+if (isDebugMode) {
+  renderDebugScreen(app)
+}
