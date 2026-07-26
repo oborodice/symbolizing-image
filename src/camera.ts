@@ -1,8 +1,11 @@
-import { CAMERA_WIDTH, CAMERA_HEIGHT } from './config'
-
-export async function startCamera(video: HTMLVideoElement): Promise<void> {
+export async function startCamera(
+  video: HTMLVideoElement,
+  width: number,
+  height: number,
+): Promise<MediaStream> {
   const stream = await navigator.mediaDevices.getUserMedia({
-    video: { width: CAMERA_WIDTH, height: CAMERA_HEIGHT },
+    video: { width, height },
   })
   video.srcObject = stream
+  return stream
 }
