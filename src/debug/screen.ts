@@ -1,6 +1,8 @@
 import './screen.css'
 import { startCamera } from '../camera'
 import { binarize } from '../binarize'
+import { drawGrid, formatGridLabel } from '../grid'
+import { bindRange, bindCheckbox } from './controls'
 import {
   RESOLUTION_PRESETS,
   DEFAULT_RESOLUTION,
@@ -19,42 +21,8 @@ const MAX_GRID_COLS = 100
 const MIN_THRESHOLD = 0
 const MAX_THRESHOLD = 255
 
-function formatGridLabel(
-  camWidth: number,
-  camHeight: number,
-  cols: number,
-  rows: number,
-): string {
-  const blockWidth = camWidth / cols
-  const blockHeight = camHeight / rows
-  return `${cols} x ${rows} (${blockWidth.toFixed(1)} x ${blockHeight.toFixed(1)}px)`
-}
-
-function drawGrid(
-  ctx: CanvasRenderingContext2D,
-  camWidth: number,
-  camHeight: number,
-  cols: number,
-  rows: number,
-): void {
-  const cellWidth = camWidth / cols
-  const cellHeight = camHeight / rows
-
-  ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)'
-  ctx.lineWidth = 1
-  ctx.beginPath()
-  for (let col = 1; col < cols; col++) {
-    const x = col * cellWidth
-    ctx.moveTo(x, 0)
-    ctx.lineTo(x, camHeight)
-  }
-  for (let row = 1; row < rows; row++) {
-    const y = row * cellHeight
-    ctx.moveTo(0, y)
-    ctx.lineTo(camWidth, y)
-  }
-  ctx.stroke()
-}
+const DEFAULT_BINARIZE = false
+const DEFAULT_SHOW_GRID = false
 
 export function renderDebugScreen(root: HTMLElement): void {
   root.classList.add('debug-screen')
@@ -123,56 +91,46 @@ export function renderDebugScreen(root: HTMLElement): void {
   }
 
   let fps = DEFAULT_FPS
-  function setFps(value: number): void {
+  const setFps = bindRange(fpsSlider, fpsValue, String, (value) => {
     fps = value
-    fpsSlider.value = String(value)
-    fpsValue.textContent = String(value)
-  }
-  fpsSlider.addEventListener('input', () => setFps(Number(fpsSlider.value)))
+  })
 
-  const DEFAULT_BINARIZE = false
   let binarizeEnabled = DEFAULT_BINARIZE
-  function setBinarize(value: boolean): void {
+  const setBinarize = bindCheckbox(binarizeToggle, (value) => {
     binarizeEnabled = value
-    binarizeToggle.checked = value
-  }
-  binarizeToggle.addEventListener('change', () =>
-    setBinarize(binarizeToggle.checked),
-  )
+  })
 
   let threshold = BINARIZE_THRESHOLD
-  function setThreshold(value: number): void {
-    threshold = value
-    thresholdSlider.value = String(value)
-    thresholdValue.textContent = String(value)
-  }
-  thresholdSlider.addEventListener('input', () =>
-    setThreshold(Number(thresholdSlider.value)),
+  const setThreshold = bindRange(
+    thresholdSlider,
+    thresholdValue,
+    String,
+    (value) => {
+      threshold = value
+    },
   )
 
-  const DEFAULT_SHOW_GRID = false
   let showGrid = DEFAULT_SHOW_GRID
-  function setShowGrid(value: boolean): void {
+  const setShowGrid = bindCheckbox(gridToggle, (value) => {
     showGrid = value
-    gridToggle.checked = value
-  }
-  gridToggle.addEventListener('change', () => setShowGrid(gridToggle.checked))
+  })
 
   let gridCols = DEFAULT_GRID_COLS
   let gridRows = DEFAULT_GRID_ROWS
-  function setGridCols(cols: number): void {
-    gridCols = cols
-    gridRows = Math.round((cols * camHeight) / camWidth)
-    gridSlider.value = String(cols)
-    gridValue.textContent = formatGridLabel(
-      camWidth,
-      camHeight,
-      gridCols,
-      gridRows,
-    )
-  }
-  gridSlider.addEventListener('input', () =>
-    setGridCols(Number(gridSlider.value)),
+  const setGridCols = bindRange(
+    gridSlider,
+    gridValue,
+    (cols) =>
+      formatGridLabel(
+        camWidth,
+        camHeight,
+        cols,
+        Math.round((cols * camHeight) / camWidth),
+      ),
+    (value) => {
+      gridCols = value
+      gridRows = Math.round((value * camHeight) / camWidth)
+    },
   )
 
   let stream: MediaStream | null = null
