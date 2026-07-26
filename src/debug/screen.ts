@@ -57,6 +57,7 @@ function drawGrid(
 }
 
 export function renderDebugScreen(root: HTMLElement): void {
+  root.classList.add('debug-screen')
   root.innerHTML = `
     <h1>DEBUG MODE</h1>
     <video id="camera" autoplay playsinline muted hidden></video>

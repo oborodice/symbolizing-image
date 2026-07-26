@@ -1,3 +1,8 @@
+.debug-screen {
+  height: 100%;
+  overflow-y: auto;
+}
+
 #preview {
   max-width: 100%;
   transform: scaleX(-1);
