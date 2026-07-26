@@ -13,7 +13,6 @@ export const RESOLUTION_PRESETS: Resolution[] = [
 export const DEFAULT_RESOLUTION = RESOLUTION_PRESETS[0]
 
 export const DEFAULT_GRID_COLS = 40
-export const DEFAULT_GRID_ROWS = 30
 
 export const DEFAULT_FPS = 15
 

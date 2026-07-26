@@ -1,13 +1,12 @@
 import './screen.css'
 import { startCamera } from '../camera'
 import { binarize } from '../binarize'
-import { drawGrid, formatGridLabel } from '../grid'
+import { drawGrid, deriveGridRows, formatGridLabel } from '../grid'
 import { bindRange, bindCheckbox } from './controls'
 import {
   RESOLUTION_PRESETS,
   DEFAULT_RESOLUTION,
   DEFAULT_GRID_COLS,
-  DEFAULT_GRID_ROWS,
   DEFAULT_FPS,
   BINARIZE_THRESHOLD,
 } from '../config'
@@ -54,7 +53,7 @@ export function renderDebugScreen(root: HTMLElement): void {
         Show grid
       </label>
       <label>
-        Grid: <span id="grid-value">${formatGridLabel(DEFAULT_RESOLUTION.width, DEFAULT_RESOLUTION.height, DEFAULT_GRID_COLS, DEFAULT_GRID_ROWS)}</span>
+        Grid: <span id="grid-value">${formatGridLabel(DEFAULT_RESOLUTION.width, DEFAULT_RESOLUTION.height, DEFAULT_GRID_COLS, deriveGridRows(DEFAULT_GRID_COLS, DEFAULT_RESOLUTION.width, DEFAULT_RESOLUTION.height))}</span>
         <input id="grid-slider" type="range" min="${MIN_GRID_COLS}" max="${MAX_GRID_COLS}" value="${DEFAULT_GRID_COLS}" />
       </label>
       <button id="reset-button" type="button">Reset parameters</button>
@@ -116,7 +115,7 @@ export function renderDebugScreen(root: HTMLElement): void {
   })
 
   let gridCols = DEFAULT_GRID_COLS
-  let gridRows = DEFAULT_GRID_ROWS
+  let gridRows = deriveGridRows(gridCols, camWidth, camHeight)
   const setGridCols = bindRange(
     gridSlider,
     gridValue,
@@ -125,11 +124,11 @@ export function renderDebugScreen(root: HTMLElement): void {
         camWidth,
         camHeight,
         cols,
-        Math.round((cols * camHeight) / camWidth),
+        deriveGridRows(cols, camWidth, camHeight),
       ),
     (value) => {
       gridCols = value
-      gridRows = Math.round((value * camHeight) / camWidth)
+      gridRows = deriveGridRows(value, camWidth, camHeight)
     },
   )
 
