@@ -1,5 +1,4 @@
-export const CAMERA_WIDTH = 640
-export const CAMERA_HEIGHT = 480
+import { CAMERA_WIDTH, CAMERA_HEIGHT } from './config'
 
 export async function startCamera(video: HTMLVideoElement): Promise<void> {
   const stream = await navigator.mediaDevices.getUserMedia({
