@@ -16,6 +16,9 @@ const MAX_FPS = 30
 const MIN_GRID_COLS = 10
 const MAX_GRID_COLS = 100
 
+const MIN_THRESHOLD = 0
+const MAX_THRESHOLD = 255
+
 function formatGridLabel(cols: number, rows: number): string {
   const blockWidth = CAMERA_WIDTH / cols
   const blockHeight = CAMERA_HEIGHT / rows
@@ -61,6 +64,10 @@ export function renderDebugScreen(root: HTMLElement): void {
         Binarize
       </label>
       <label>
+        Threshold: <span id="threshold-value">${BINARIZE_THRESHOLD}</span>
+        <input id="threshold-slider" type="range" min="${MIN_THRESHOLD}" max="${MAX_THRESHOLD}" value="${BINARIZE_THRESHOLD}" />
+      </label>
+      <label>
         <input id="grid-toggle" type="checkbox" />
         Show grid
       </label>
@@ -79,6 +86,10 @@ export function renderDebugScreen(root: HTMLElement): void {
   const fpsValue = root.querySelector<HTMLSpanElement>('#fps-value')!
   const binarizeToggle =
     root.querySelector<HTMLInputElement>('#binarize-toggle')!
+  const thresholdSlider =
+    root.querySelector<HTMLInputElement>('#threshold-slider')!
+  const thresholdValue =
+    root.querySelector<HTMLSpanElement>('#threshold-value')!
   const gridToggle = root.querySelector<HTMLInputElement>('#grid-toggle')!
   const gridSlider = root.querySelector<HTMLInputElement>('#grid-slider')!
   const gridValue = root.querySelector<HTMLSpanElement>('#grid-value')!
@@ -100,6 +111,16 @@ export function renderDebugScreen(root: HTMLElement): void {
   }
   binarizeToggle.addEventListener('change', () =>
     setBinarize(binarizeToggle.checked),
+  )
+
+  let threshold = BINARIZE_THRESHOLD
+  function setThreshold(value: number): void {
+    threshold = value
+    thresholdSlider.value = String(value)
+    thresholdValue.textContent = String(value)
+  }
+  thresholdSlider.addEventListener('input', () =>
+    setThreshold(Number(thresholdSlider.value)),
   )
 
   const DEFAULT_SHOW_GRID = false
@@ -126,6 +147,7 @@ export function renderDebugScreen(root: HTMLElement): void {
     setFps(DEFAULT_FPS)
     setGridCols(DEFAULT_GRID_COLS)
     setBinarize(DEFAULT_BINARIZE)
+    setThreshold(BINARIZE_THRESHOLD)
     setShowGrid(DEFAULT_SHOW_GRID)
   })
 
@@ -139,7 +161,7 @@ export function renderDebugScreen(root: HTMLElement): void {
       ctx.drawImage(video, 0, 0, CAMERA_WIDTH, CAMERA_HEIGHT)
       if (binarizeEnabled) {
         const imageData = ctx.getImageData(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT)
-        binarize(imageData, BINARIZE_THRESHOLD)
+        binarize(imageData, threshold)
         ctx.putImageData(imageData, 0, 0)
       }
       if (showGrid) {
