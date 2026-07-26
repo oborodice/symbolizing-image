@@ -62,6 +62,7 @@ export function renderDebugScreen(root: HTMLElement): void {
         Grid: <span id="grid-value">${formatGridLabel(DEFAULT_GRID_COLS, DEFAULT_GRID_ROWS)}</span>
         <input id="grid-slider" type="range" min="${MIN_GRID_COLS}" max="${MAX_GRID_COLS}" value="${DEFAULT_GRID_COLS}" />
       </label>
+      <button id="reset-button" type="button">Reset parameters</button>
     </div>
   `
 
@@ -73,24 +74,40 @@ export function renderDebugScreen(root: HTMLElement): void {
   const gridToggle = root.querySelector<HTMLInputElement>('#grid-toggle')!
   const gridSlider = root.querySelector<HTMLInputElement>('#grid-slider')!
   const gridValue = root.querySelector<HTMLSpanElement>('#grid-value')!
+  const resetButton = root.querySelector<HTMLButtonElement>('#reset-button')!
 
   let fps = DEFAULT_FPS
-  fpsSlider.addEventListener('input', () => {
-    fps = Number(fpsSlider.value)
-    fpsValue.textContent = String(fps)
-  })
+  function setFps(value: number): void {
+    fps = value
+    fpsSlider.value = String(value)
+    fpsValue.textContent = String(value)
+  }
+  fpsSlider.addEventListener('input', () => setFps(Number(fpsSlider.value)))
 
-  let showGrid = false
-  gridToggle.addEventListener('change', () => {
-    showGrid = gridToggle.checked
-  })
+  const DEFAULT_SHOW_GRID = false
+  let showGrid = DEFAULT_SHOW_GRID
+  function setShowGrid(value: boolean): void {
+    showGrid = value
+    gridToggle.checked = value
+  }
+  gridToggle.addEventListener('change', () => setShowGrid(gridToggle.checked))
 
   let gridCols = DEFAULT_GRID_COLS
   let gridRows = DEFAULT_GRID_ROWS
-  gridSlider.addEventListener('input', () => {
-    gridCols = Number(gridSlider.value)
-    gridRows = Math.round((gridCols * CAMERA_HEIGHT) / CAMERA_WIDTH)
+  function setGridCols(cols: number): void {
+    gridCols = cols
+    gridRows = Math.round((cols * CAMERA_HEIGHT) / CAMERA_WIDTH)
+    gridSlider.value = String(cols)
     gridValue.textContent = formatGridLabel(gridCols, gridRows)
+  }
+  gridSlider.addEventListener('input', () =>
+    setGridCols(Number(gridSlider.value)),
+  )
+
+  resetButton.addEventListener('click', () => {
+    setFps(DEFAULT_FPS)
+    setGridCols(DEFAULT_GRID_COLS)
+    setShowGrid(DEFAULT_SHOW_GRID)
   })
 
   startCamera(video)
