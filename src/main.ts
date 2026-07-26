@@ -1,5 +1,6 @@
 import './style.css'
+import { isDebugMode } from './debug'
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <h1>symbolizing-image</h1>
+  ${isDebugMode ? '<h1>DEBUG MODE</h1>' : ''}
 `
