@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@expo-google-fonts/noto-sans-jp": "^0.4.3",
+    "@expo-google-fonts/noto-sans-siddham": "^0.4.1",
     "@types/node": "^26.1.1",
     "fflate": "^0.8.3",
     "typescript": "~6.0.2",
