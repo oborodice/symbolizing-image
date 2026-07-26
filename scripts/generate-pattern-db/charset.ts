@@ -1,3 +1,5 @@
+import kanji from '../fetch-jis-x0213-kanji/kanji.json' with { type: 'json' }
+
 function range(start: number, end: number): number[] {
   const codePoints: number[] = []
   for (let cp = start; cp <= end; cp++) {
@@ -19,3 +21,5 @@ export const FULLWIDTH_ASCII = range(0xff01, 0xff5e)
 
 // U+115B6, U+115B7は未割当のため除外
 export const SIDDHAM = [...range(0x11580, 0x115b5), ...range(0x115b8, 0x115dd)]
+
+export const KANJI: number[] = kanji
