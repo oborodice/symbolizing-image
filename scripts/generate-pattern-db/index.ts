@@ -9,9 +9,10 @@ import {
   SIDDHAM,
   KANJI,
 } from './charset.ts'
-import { renderBitmap } from './binarized-char.ts'
+import { renderBinarizedChar } from './binarized-char.ts'
 import { exportUpscaledPreview } from './preview.ts'
 import { findReferenceFontSize } from './reference-font-size.ts'
+import { packBits, popcount } from './pack-bits.ts'
 
 const charsets = {
   ASCII,
@@ -80,17 +81,23 @@ const previewDir = new URL('./preview/', import.meta.url)
 mkdirSync(previewDir, { recursive: true })
 
 previewChars.forEach((char, i) => {
-  const bitmap = renderBitmap({
+  const { canvas, imageData } = renderBinarizedChar({
     char,
     fontSize: notoSansJpFontSize,
     fontFamily: NOTO_SANS_JP,
     size: BITMAP_SIZE,
     threshold: BINARIZE_THRESHOLD,
   })
-  exportUpscaledPreview(bitmap, 10, new URL(`./${i + 1}.png`, previewDir))
+  exportUpscaledPreview(canvas, 10, new URL(`./${i + 1}.png`, previewDir))
+
+  const packed = packBits(imageData)
+  console.log(
+    char,
+    `popcount=${popcount(packed)}/${BITMAP_SIZE * BITMAP_SIZE}`,
+    Array.from(packed, (word) => word.toString(16).padStart(8, '0')).join(' '),
+  )
 })
 
 console.log('Preview characters:', previewChars.join(' '))
 
-// TODO: 二値化した値をUint32Arrayにビット詰め
 // TODO: バイナリファイルとして書き出す
