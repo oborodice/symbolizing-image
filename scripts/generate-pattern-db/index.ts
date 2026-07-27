@@ -1,4 +1,4 @@
-import { createCanvas, GlobalFonts } from '@napi-rs/canvas'
+import { GlobalFonts } from '@napi-rs/canvas'
 import {
   ASCII,
   HIRAGANA,
@@ -8,46 +8,80 @@ import {
   SIDDHAM,
   KANJI,
 } from './charset.ts'
-import { drawCharFitted } from './render.ts'
+import { renderBitmap } from './binarized-char.ts'
 import { exportUpscaledPreview } from './preview.ts'
+import { findReferenceFontSize } from './reference-font-size.ts'
 
-console.log('ASCII:', ASCII.length)
-console.log('Hiragana:', HIRAGANA.length)
-console.log('Katakana:', KATAKANA.length)
-console.log('Halfwidth Katakana:', HALFWIDTH_KATAKANA.length)
-console.log('Fullwidth ASCII:', FULLWIDTH_ASCII.length)
-console.log('Siddham:', SIDDHAM.length)
-console.log('Kanji:', KANJI.length)
-console.log(
-  'Total:',
-  ASCII.length +
-    HIRAGANA.length +
-    KATAKANA.length +
-    HALFWIDTH_KATAKANA.length +
-    FULLWIDTH_ASCII.length +
-    SIDDHAM.length +
-    KANJI.length,
+const charsets = {
+  ASCII,
+  Hiragana: HIRAGANA,
+  Katakana: KATAKANA,
+  'Halfwidth Katakana': HALFWIDTH_KATAKANA,
+  'Fullwidth ASCII': FULLWIDTH_ASCII,
+  Siddham: SIDDHAM,
+  Kanji: KANJI,
+}
+
+let total = 0
+for (const [name, codePoints] of Object.entries(charsets)) {
+  console.log(`${name}:`, codePoints.length)
+  total += codePoints.length
+}
+console.log('Total:', total)
+
+function registerFont(name: string, relativePath: string): void {
+  GlobalFonts.registerFromPath(
+    new URL(relativePath, import.meta.url).pathname,
+    name,
+  )
+}
+
+const NOTO_SANS_JP = 'Noto Sans JP'
+registerFont(
+  NOTO_SANS_JP,
+  '../../node_modules/@expo-google-fonts/noto-sans-jp/400Regular/NotoSansJP_400Regular.ttf',
 )
 
-const FONT_FAMILY = 'Noto Sans JP'
-GlobalFonts.registerFromPath(
-  new URL(
-    '../../node_modules/@expo-google-fonts/noto-sans-jp/400Regular/NotoSansJP_400Regular.ttf',
-    import.meta.url,
-  ).pathname,
-  FONT_FAMILY,
+const NOTO_SANS_SIDDHAM = 'Noto Sans Siddham'
+registerFont(
+  NOTO_SANS_SIDDHAM,
+  '../../node_modules/@expo-google-fonts/noto-sans-siddham/400Regular/NotoSansSiddham_400Regular.ttf',
 )
 
-const bitmapSize = 24
+const BITMAP_SIZE = 24
+// ライブカメラ映像側（src/config.tsのBINARIZE_THRESHOLD）と同じ閾値に揃える
+const BINARIZE_THRESHOLD = 128
+
+// Noto Sans JPで描く文字集合全体の基準フォントサイズは、漢字だけを対象に探索する。
+// 「|」等の記号は罫線的な用途で意図的に縦長にデザインされており、
+// 情報量の多さとは無関係にキャンバスをはみ出す（探索の基準として不適切）ため対象外
+const notoSansJpFontSize = findReferenceFontSize(
+  KANJI,
+  NOTO_SANS_JP,
+  BITMAP_SIZE,
+  BINARIZE_THRESHOLD,
+)
+console.log('Noto Sans JP font size:', notoSansJpFontSize)
+
+// Noto Sans Siddhamは別フォントなので、梵字だけで別途基準フォントサイズを求める
+const notoSansSiddhamFontSize = findReferenceFontSize(
+  SIDDHAM,
+  NOTO_SANS_SIDDHAM,
+  BITMAP_SIZE,
+  BINARIZE_THRESHOLD,
+)
+console.log('Noto Sans Siddham font size:', notoSansSiddhamFontSize)
+
 const previewChar = '鬱' // 29画、複雑な漢字での潰れ具合を見る
 
-const bitmapCanvas = createCanvas(bitmapSize, bitmapSize)
-const bitmapCtx = bitmapCanvas.getContext('2d')
-bitmapCtx.fillStyle = 'white'
-bitmapCtx.fillRect(0, 0, bitmapSize, bitmapSize)
-bitmapCtx.fillStyle = 'black'
+const bitmapCanvas = renderBitmap({
+  char: previewChar,
+  fontSize: notoSansJpFontSize,
+  fontFamily: NOTO_SANS_JP,
+  size: BITMAP_SIZE,
+  threshold: BINARIZE_THRESHOLD,
+})
 
-drawCharFitted(bitmapCtx, previewChar, bitmapSize, FONT_FAMILY)
 exportUpscaledPreview(
   bitmapCanvas,
   10,
@@ -56,5 +90,5 @@ exportUpscaledPreview(
 
 console.log('Preview character:', previewChar)
 
-// TODO: getImageDataで二値化し、Uint32Arrayにビット詰め
+// TODO: 二値化した値をUint32Arrayにビット詰め
 // TODO: バイナリファイルとして書き出す
