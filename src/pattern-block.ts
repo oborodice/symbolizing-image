@@ -6,15 +6,14 @@ export interface PatternBlock extends BlockRect {
 
 // 切り出し用のcanvasは毎フレーム作り直すと無駄なので使い回す。
 // sizeが変わった場合のみ作り直す（現状は常に同じPATTERN_SIZEだが、念のため）
-let cropCanvas: HTMLCanvasElement | null = null
 let cropCtx: CanvasRenderingContext2D | null = null
 
 function getCropContext(size: number): CanvasRenderingContext2D {
-  if (!cropCtx || cropCanvas!.width !== size || cropCanvas!.height !== size) {
-    cropCanvas = document.createElement('canvas')
-    cropCanvas.width = size
-    cropCanvas.height = size
-    cropCtx = cropCanvas.getContext('2d')!
+  if (!cropCtx || cropCtx.canvas.width !== size || cropCtx.canvas.height !== size) {
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+    cropCtx = canvas.getContext('2d')!
     cropCtx.imageSmoothingQuality = 'high'
   }
   return cropCtx

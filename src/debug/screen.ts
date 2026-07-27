@@ -51,15 +51,15 @@ export function renderDebugScreen(root: HTMLElement): void {
         <input id="binarize-threshold-slider" type="range" min="${MIN_BINARIZE_THRESHOLD}" max="${MAX_BINARIZE_THRESHOLD}" value="${BINARIZE_THRESHOLD}" />
       </label>
       <label>
-        <input id="show-camera-toggle" type="checkbox" checked />
+        <input id="show-camera-toggle" type="checkbox" ${DEFAULT_SHOW_CAMERA ? 'checked' : ''} />
         Show camera
       </label>
       <label>
-        <input id="show-chars-toggle" type="checkbox" checked />
+        <input id="show-chars-toggle" type="checkbox" ${DEFAULT_SHOW_CHARS ? 'checked' : ''} />
         Show characters
       </label>
       <label>
-        <input id="grid-toggle" type="checkbox" />
+        <input id="grid-toggle" type="checkbox" ${DEFAULT_SHOW_GRID ? 'checked' : ''} />
         Show grid
       </label>
       <label>
@@ -161,12 +161,23 @@ export function renderDebugScreen(root: HTMLElement): void {
   // camWidth/camHeight/gridCols/gridRowsが変わらない限り、ブロックの矩形は
   // 毎フレーム同じ結果になるので、値が変わった時だけ再計算する
   let cachedRects: BlockRect[] | null = null
-  let cachedRectsKey = ''
+  let cachedCamWidth = -1
+  let cachedCamHeight = -1
+  let cachedGridCols = -1
+  let cachedGridRows = -1
   function getBlockRects(): BlockRect[] {
-    const key = `${camWidth}x${camHeight}:${gridCols}x${gridRows}`
-    if (!cachedRects || cachedRectsKey !== key) {
+    if (
+      !cachedRects ||
+      cachedCamWidth !== camWidth ||
+      cachedCamHeight !== camHeight ||
+      cachedGridCols !== gridCols ||
+      cachedGridRows !== gridRows
+    ) {
       cachedRects = computeBlockRects(camWidth, camHeight, gridCols, gridRows)
-      cachedRectsKey = key
+      cachedCamWidth = camWidth
+      cachedCamHeight = camHeight
+      cachedGridCols = gridCols
+      cachedGridRows = gridRows
     }
     return cachedRects
   }
