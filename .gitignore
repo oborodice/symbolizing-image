@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Generated pattern DB
+src/assets/pattern-db.bin
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

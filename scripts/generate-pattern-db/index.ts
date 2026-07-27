@@ -13,6 +13,7 @@ import { renderBinarizedChar } from './binarized-char.ts'
 import { exportUpscaledPreview } from './preview.ts'
 import { findReferenceFontSize } from './reference-font-size.ts'
 import { packBits, popcount } from './pack-bits.ts'
+import { writePatternDb } from './write-pattern-db.ts'
 
 const charsets = {
   ASCII,
@@ -80,7 +81,7 @@ const previewChars = ['一', 'あ', 'ア', 'A', '@', '・', '鬱', '㐂', '曇',
 const previewDir = new URL('./preview/', import.meta.url)
 mkdirSync(previewDir, { recursive: true })
 
-previewChars.forEach((char, i) => {
+const previewEntries = previewChars.map((char, i) => {
   const { canvas, imageData } = renderBinarizedChar({
     char,
     fontSize: notoSansJpFontSize,
@@ -96,8 +97,15 @@ previewChars.forEach((char, i) => {
     `popcount=${popcount(packed)}/${BITMAP_SIZE * BITMAP_SIZE}`,
     Array.from(packed, (word) => word.toString(16).padStart(8, '0')).join(' '),
   )
+
+  return { codePoint: char.codePointAt(0)!, packed }
 })
 
 console.log('Preview characters:', previewChars.join(' '))
 
-// TODO: バイナリファイルとして書き出す
+const patternDbPath = new URL(
+  '../../src/assets/pattern-db.bin',
+  import.meta.url,
+)
+writePatternDb(previewEntries, patternDbPath)
+console.log('Wrote pattern DB:', patternDbPath.pathname)
