@@ -52,7 +52,7 @@ registerFont(
   '../../node_modules/@expo-google-fonts/noto-sans-siddham/400Regular/NotoSansSiddham_400Regular.ttf',
 )
 
-const BITMAP_SIZE = 24
+const PATTERN_SIZE = 24
 // ライブカメラ映像側（src/config.tsのBINARIZE_THRESHOLD）と同じ閾値に揃える
 const BINARIZE_THRESHOLD = 128
 
@@ -62,7 +62,7 @@ const BINARIZE_THRESHOLD = 128
 const notoSansJpFontSize = findReferenceFontSize(
   KANJI,
   NOTO_SANS_JP,
-  BITMAP_SIZE,
+  PATTERN_SIZE,
   BINARIZE_THRESHOLD,
 )
 console.log('Noto Sans JP font size:', notoSansJpFontSize)
@@ -71,7 +71,7 @@ console.log('Noto Sans JP font size:', notoSansJpFontSize)
 const notoSansSiddhamFontSize = findReferenceFontSize(
   SIDDHAM,
   NOTO_SANS_SIDDHAM,
-  BITMAP_SIZE,
+  PATTERN_SIZE,
   BINARIZE_THRESHOLD,
 )
 console.log('Noto Sans Siddham font size:', notoSansSiddhamFontSize)
@@ -87,7 +87,7 @@ console.log('Noto Sans Siddham font size:', notoSansSiddhamFontSize)
 //     char,
 //     fontSize: notoSansJpFontSize,
 //     fontFamily: NOTO_SANS_JP,
-//     size: BITMAP_SIZE,
+//     size: PATTERN_SIZE,
 //     threshold: BINARIZE_THRESHOLD,
 //   })
 //   exportUpscaledPreview(canvas, 10, new URL(`./${i + 1}.png`, previewDir))
@@ -95,7 +95,7 @@ console.log('Noto Sans Siddham font size:', notoSansSiddhamFontSize)
 //   const packed = packBits(imageData)
 //   console.log(
 //     char,
-//     `popcount=${popcount(packed)}/${BITMAP_SIZE * BITMAP_SIZE}`,
+//     `popcount=${popcount(packed)}/${PATTERN_SIZE * PATTERN_SIZE}`,
 //     Array.from(packed, (word) => word.toString(16).padStart(8, '0')).join(' '),
 //   )
 // })
@@ -110,7 +110,7 @@ function buildEntries(
       char: String.fromCodePoint(codePoint),
       fontSize,
       fontFamily,
-      size: BITMAP_SIZE,
+      size: PATTERN_SIZE,
       threshold: BINARIZE_THRESHOLD,
     })
     return { codePoint, packed: packBits(imageData) }

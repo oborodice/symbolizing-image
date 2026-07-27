@@ -3,6 +3,7 @@ import { startCamera } from '../camera'
 import { binarize } from '../binarize'
 import { drawGrid, deriveGridRows, formatGridLabel } from '../grid'
 import { extractBlocks } from '../blocks'
+import { resizeImageData } from '../resize'
 import { bindRange, bindCheckbox } from './controls'
 import {
   RESOLUTION_PRESETS,
@@ -10,6 +11,7 @@ import {
   DEFAULT_GRID_COLS,
   DEFAULT_FPS,
   BINARIZE_THRESHOLD,
+  PATTERN_SIZE,
 } from '../config'
 
 const MIN_FPS = 1
@@ -18,10 +20,9 @@ const MAX_FPS = 30
 const MIN_GRID_COLS = 10
 const MAX_GRID_COLS = 100
 
-const MIN_THRESHOLD = 0
-const MAX_THRESHOLD = 255
+const MIN_BINARIZE_THRESHOLD = 0
+const MAX_BINARIZE_THRESHOLD = 255
 
-const DEFAULT_BINARIZE = false
 const DEFAULT_SHOW_GRID = false
 
 export function renderDebugScreen(root: HTMLElement): void {
@@ -42,12 +43,8 @@ export function renderDebugScreen(root: HTMLElement): void {
         <input id="fps-slider" type="range" min="${MIN_FPS}" max="${MAX_FPS}" value="${DEFAULT_FPS}" />
       </label>
       <label>
-        <input id="binarize-toggle" type="checkbox" />
-        Binarize
-      </label>
-      <label>
-        Threshold: <span id="threshold-value">${BINARIZE_THRESHOLD}</span>
-        <input id="threshold-slider" type="range" min="${MIN_THRESHOLD}" max="${MAX_THRESHOLD}" value="${BINARIZE_THRESHOLD}" />
+        Binarize threshold: <span id="binarize-threshold-value">${BINARIZE_THRESHOLD}</span>
+        <input id="binarize-threshold-slider" type="range" min="${MIN_BINARIZE_THRESHOLD}" max="${MAX_BINARIZE_THRESHOLD}" value="${BINARIZE_THRESHOLD}" />
       </label>
       <label>
         <input id="grid-toggle" type="checkbox" />
@@ -68,12 +65,12 @@ export function renderDebugScreen(root: HTMLElement): void {
     root.querySelector<HTMLSelectElement>('#resolution-select')!
   const fpsSlider = root.querySelector<HTMLInputElement>('#fps-slider')!
   const fpsValue = root.querySelector<HTMLSpanElement>('#fps-value')!
-  const binarizeToggle =
-    root.querySelector<HTMLInputElement>('#binarize-toggle')!
-  const thresholdSlider =
-    root.querySelector<HTMLInputElement>('#threshold-slider')!
-  const thresholdValue =
-    root.querySelector<HTMLSpanElement>('#threshold-value')!
+  const binarizeThresholdSlider = root.querySelector<HTMLInputElement>(
+    '#binarize-threshold-slider',
+  )!
+  const binarizeThresholdValue = root.querySelector<HTMLSpanElement>(
+    '#binarize-threshold-value',
+  )!
   const gridToggle = root.querySelector<HTMLInputElement>('#grid-toggle')!
   const gridSlider = root.querySelector<HTMLInputElement>('#grid-slider')!
   const gridValue = root.querySelector<HTMLSpanElement>('#grid-value')!
@@ -95,18 +92,13 @@ export function renderDebugScreen(root: HTMLElement): void {
     fps = value
   })
 
-  let binarizeEnabled = DEFAULT_BINARIZE
-  const setBinarize = bindCheckbox(binarizeToggle, (value) => {
-    binarizeEnabled = value
-  })
-
-  let threshold = BINARIZE_THRESHOLD
-  const setThreshold = bindRange(
-    thresholdSlider,
-    thresholdValue,
+  let binarizeThreshold = BINARIZE_THRESHOLD
+  const setBinarizeThreshold = bindRange(
+    binarizeThresholdSlider,
+    binarizeThresholdValue,
     String,
     (value) => {
-      threshold = value
+      binarizeThreshold = value
     },
   )
 
@@ -153,8 +145,7 @@ export function renderDebugScreen(root: HTMLElement): void {
     applyResolution(DEFAULT_RESOLUTION.width, DEFAULT_RESOLUTION.height)
     setFps(DEFAULT_FPS)
     setGridCols(DEFAULT_GRID_COLS)
-    setBinarize(DEFAULT_BINARIZE)
-    setThreshold(BINARIZE_THRESHOLD)
+    setBinarizeThreshold(BINARIZE_THRESHOLD)
     setShowGrid(DEFAULT_SHOW_GRID)
     await restartCamera()
   })
@@ -168,12 +159,20 @@ export function renderDebugScreen(root: HTMLElement): void {
     if (time - lastDrawTime >= interval) {
       lastDrawTime = time
       ctx.drawImage(video, 0, 0, camWidth, camHeight)
-      if (binarizeEnabled) {
-        const imageData = ctx.getImageData(0, 0, camWidth, camHeight)
-        binarize(imageData, threshold)
-        ctx.putImageData(imageData, 0, 0)
-      }
-      extractBlocks(ctx, camWidth, camHeight, gridCols, gridRows)
+      const blocks = extractBlocks(
+        ctx,
+        camWidth,
+        camHeight,
+        gridCols,
+        gridRows,
+      )
+      blocks.forEach((block) => {
+        const imageData = resizeImageData(block.imageData, PATTERN_SIZE)
+        binarize(imageData, binarizeThreshold)
+        block.imageData = imageData
+      })
+      // TODO: 各blockをpattern-db.binの全エントリとハミング距離で比較し、
+      // 最も近い文字をblock.row/colの位置に描画する
       if (showGrid) {
         drawGrid(ctx, camWidth, camHeight, gridCols, gridRows)
       }

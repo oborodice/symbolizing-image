@@ -17,3 +17,7 @@ export const DEFAULT_GRID_COLS = 40
 export const DEFAULT_FPS = 15
 
 export const BINARIZE_THRESHOLD = 128
+
+// パターンDB生成側（scripts/generate-pattern-db/index.tsのPATTERN_SIZE）と
+// 同じ解像度に揃える
+export const PATTERN_SIZE = 24
