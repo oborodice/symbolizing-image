@@ -1,5 +1,4 @@
 import { createCanvas, GlobalFonts } from '@napi-rs/canvas'
-import { writeFileSync } from 'node:fs'
 import {
   ASCII,
   HIRAGANA,
@@ -9,6 +8,8 @@ import {
   SIDDHAM,
   KANJI,
 } from './charset.ts'
+import { drawCharFitted } from './render.ts'
+import { exportUpscaledPreview } from './preview.ts'
 
 console.log('ASCII:', ASCII.length)
 console.log('Hiragana:', HIRAGANA.length)
@@ -28,33 +29,32 @@ console.log(
     KANJI.length,
 )
 
+const FONT_FAMILY = 'Noto Sans JP'
 GlobalFonts.registerFromPath(
   new URL(
     '../../node_modules/@expo-google-fonts/noto-sans-jp/400Regular/NotoSansJP_400Regular.ttf',
     import.meta.url,
   ).pathname,
-  'Noto Sans JP',
+  FONT_FAMILY,
 )
 
-const previewSize = 200
-const canvas = createCanvas(previewSize, previewSize)
-const ctx = canvas.getContext('2d')
+const bitmapSize = 24
+const previewChar = '鬱' // 29画、複雑な漢字での潰れ具合を見る
 
-ctx.fillStyle = 'white'
-ctx.fillRect(0, 0, previewSize, previewSize)
+const bitmapCanvas = createCanvas(bitmapSize, bitmapSize)
+const bitmapCtx = bitmapCanvas.getContext('2d')
+bitmapCtx.fillStyle = 'white'
+bitmapCtx.fillRect(0, 0, bitmapSize, bitmapSize)
+bitmapCtx.fillStyle = 'black'
 
-ctx.fillStyle = 'black'
-ctx.font = `${previewSize * 0.8}px "Noto Sans JP"`
-ctx.textAlign = 'center'
-ctx.textBaseline = 'middle'
-ctx.fillText(String.fromCodePoint(KANJI[0]), previewSize / 2, previewSize / 2)
-
-writeFileSync(
+drawCharFitted(bitmapCtx, previewChar, bitmapSize, FONT_FAMILY)
+exportUpscaledPreview(
+  bitmapCanvas,
+  10,
   new URL('./preview.png', import.meta.url),
-  canvas.toBuffer('image/png'),
 )
 
-console.log('Preview character:', String.fromCodePoint(KANJI[0]))
+console.log('Preview character:', previewChar)
 
 // TODO: getImageDataで二値化し、Uint32Arrayにビット詰め
 // TODO: バイナリファイルとして書き出す
