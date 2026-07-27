@@ -26,6 +26,8 @@ const MIN_BINARIZE_THRESHOLD = 0
 const MAX_BINARIZE_THRESHOLD = 255
 
 const DEFAULT_SHOW_GRID = false
+const DEFAULT_SHOW_CAMERA = true
+const DEFAULT_SHOW_CHARS = true
 
 export function renderDebugScreen(root: HTMLElement): void {
   root.classList.add('debug-screen')
@@ -47,6 +49,14 @@ export function renderDebugScreen(root: HTMLElement): void {
       <label>
         Binarize threshold: <span id="binarize-threshold-value">${BINARIZE_THRESHOLD}</span>
         <input id="binarize-threshold-slider" type="range" min="${MIN_BINARIZE_THRESHOLD}" max="${MAX_BINARIZE_THRESHOLD}" value="${BINARIZE_THRESHOLD}" />
+      </label>
+      <label>
+        <input id="show-camera-toggle" type="checkbox" checked />
+        Show camera
+      </label>
+      <label>
+        <input id="show-chars-toggle" type="checkbox" checked />
+        Show characters
       </label>
       <label>
         <input id="grid-toggle" type="checkbox" />
@@ -72,6 +82,12 @@ export function renderDebugScreen(root: HTMLElement): void {
   )!
   const binarizeThresholdValue = root.querySelector<HTMLSpanElement>(
     '#binarize-threshold-value',
+  )!
+  const showCameraToggle = root.querySelector<HTMLInputElement>(
+    '#show-camera-toggle',
+  )!
+  const showCharsToggle = root.querySelector<HTMLInputElement>(
+    '#show-chars-toggle',
   )!
   const gridToggle = root.querySelector<HTMLInputElement>('#grid-toggle')!
   const gridSlider = root.querySelector<HTMLInputElement>('#grid-slider')!
@@ -108,6 +124,16 @@ export function renderDebugScreen(root: HTMLElement): void {
       binarizeThreshold = value
     },
   )
+
+  let showCamera = DEFAULT_SHOW_CAMERA
+  const setShowCamera = bindCheckbox(showCameraToggle, (value) => {
+    showCamera = value
+  })
+
+  let showChars = DEFAULT_SHOW_CHARS
+  const setShowChars = bindCheckbox(showCharsToggle, (value) => {
+    showChars = value
+  })
 
   let showGrid = DEFAULT_SHOW_GRID
   const setShowGrid = bindCheckbox(gridToggle, (value) => {
@@ -153,6 +179,8 @@ export function renderDebugScreen(root: HTMLElement): void {
     setFps(DEFAULT_FPS)
     setGridCols(DEFAULT_GRID_COLS)
     setBinarizeThreshold(BINARIZE_THRESHOLD)
+    setShowCamera(DEFAULT_SHOW_CAMERA)
+    setShowChars(DEFAULT_SHOW_CHARS)
     setShowGrid(DEFAULT_SHOW_GRID)
     await restartCamera()
   })
@@ -165,14 +193,20 @@ export function renderDebugScreen(root: HTMLElement): void {
     const interval = 1000 / fps
     if (time - lastDrawTime >= interval) {
       lastDrawTime = time
+      // ブロック抽出は常にカメラ映像を必要とするため、showCameraに関わらず描画する。
+      // 元映像を非表示にしたい場合は、抽出後に上から塗りつぶす
       ctx.drawImage(video, 0, 0, camWidth, camHeight)
       const rects = computeBlockRects(camWidth, camHeight, gridCols, gridRows)
       const blocks = extractPatternBlocks(canvas, rects, PATTERN_SIZE)
       blocks.forEach((block) => {
         binarize(block.imageData, binarizeThreshold)
       })
+      if (!showCamera) {
+        ctx.fillStyle = 'black'
+        ctx.fillRect(0, 0, camWidth, camHeight)
+      }
       const db = patternDb
-      if (db) {
+      if (showChars && db) {
         drawMatchedChars(ctx, blocks, rects, db, packedBlock)
       }
       if (showGrid) {
