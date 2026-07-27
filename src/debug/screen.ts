@@ -2,9 +2,11 @@ import './screen.css'
 import { startCamera } from '../camera'
 import { binarize } from '../binarize'
 import { drawGrid, deriveGridRows, formatGridLabel } from '../grid'
-import { extractBlocks } from '../blocks'
-import { resizeImageData } from '../resize'
+import { computeBlockRects } from '../blocks'
+import { extractPatternBlocks } from '../pattern-block'
 import { bindRange, bindCheckbox } from './controls'
+import { PATTERN_WORDS, loadPatternDb, type PatternDb } from '../pattern-db'
+import { drawMatchedChars } from '../draw-matched-chars'
 import {
   RESOLUTION_PRESETS,
   DEFAULT_RESOLUTION,
@@ -75,6 +77,11 @@ export function renderDebugScreen(root: HTMLElement): void {
   const gridSlider = root.querySelector<HTMLInputElement>('#grid-slider')!
   const gridValue = root.querySelector<HTMLSpanElement>('#grid-value')!
   const resetButton = root.querySelector<HTMLButtonElement>('#reset-button')!
+  const packedBlock = new Uint32Array(PATTERN_WORDS)
+  let patternDb: PatternDb | null = null
+  void loadPatternDb().then((db) => {
+    patternDb = db
+  })
 
   let camWidth = DEFAULT_RESOLUTION.width
   let camHeight = DEFAULT_RESOLUTION.height
@@ -159,20 +166,15 @@ export function renderDebugScreen(root: HTMLElement): void {
     if (time - lastDrawTime >= interval) {
       lastDrawTime = time
       ctx.drawImage(video, 0, 0, camWidth, camHeight)
-      const blocks = extractBlocks(
-        ctx,
-        camWidth,
-        camHeight,
-        gridCols,
-        gridRows,
-      )
+      const rects = computeBlockRects(camWidth, camHeight, gridCols, gridRows)
+      const blocks = extractPatternBlocks(canvas, rects, PATTERN_SIZE)
       blocks.forEach((block) => {
-        const imageData = resizeImageData(block.imageData, PATTERN_SIZE)
-        binarize(imageData, binarizeThreshold)
-        block.imageData = imageData
+        binarize(block.imageData, binarizeThreshold)
       })
-      // TODO: 各blockをpattern-db.binの全エントリとハミング距離で比較し、
-      // 最も近い文字をblock.row/colの位置に描画する
+      const db = patternDb
+      if (db) {
+        drawMatchedChars(ctx, blocks, rects, db, packedBlock)
+      }
       if (showGrid) {
         drawGrid(ctx, camWidth, camHeight, gridCols, gridRows)
       }
