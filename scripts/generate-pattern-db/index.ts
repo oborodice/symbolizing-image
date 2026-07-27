@@ -1,5 +1,5 @@
 import { GlobalFonts } from '@napi-rs/canvas'
-import { mkdirSync } from 'node:fs'
+// import { mkdirSync } from 'node:fs'
 import {
   ASCII,
   HIRAGANA,
@@ -10,9 +10,10 @@ import {
   KANJI,
 } from './charset.ts'
 import { renderBinarizedChar } from './binarized-char.ts'
-import { exportUpscaledPreview } from './preview.ts'
+// import { exportUpscaledPreview } from './preview.ts'
 import { findReferenceFontSize } from './reference-font-size.ts'
-import { packBits, popcount } from './pack-bits.ts'
+import { packBits } from './pack-bits.ts'
+// import { popcount } from './pack-bits.ts'
 import { writePatternDb } from './write-pattern-db.ts'
 
 const charsets = {
@@ -76,36 +77,64 @@ const notoSansSiddhamFontSize = findReferenceFontSize(
 console.log('Noto Sans Siddham font size:', notoSansSiddhamFontSize)
 
 // 疎ら〜複雑まで幅広い文字を並べて、疎密が保たれているか確認する
-const previewChars = ['一', 'あ', 'ア', 'A', '@', '・', '鬱', '㐂', '曇', '薔', '憂', '謝']
+// const previewChars = ['一', 'あ', 'ア', 'A', '@', '・', '鬱', '㐂', '曇', '薔', '憂', '謝']
+//
+// const previewDir = new URL('./preview/', import.meta.url)
+// mkdirSync(previewDir, { recursive: true })
+//
+// previewChars.forEach((char, i) => {
+//   const { canvas, imageData } = renderBinarizedChar({
+//     char,
+//     fontSize: notoSansJpFontSize,
+//     fontFamily: NOTO_SANS_JP,
+//     size: BITMAP_SIZE,
+//     threshold: BINARIZE_THRESHOLD,
+//   })
+//   exportUpscaledPreview(canvas, 10, new URL(`./${i + 1}.png`, previewDir))
+//
+//   const packed = packBits(imageData)
+//   console.log(
+//     char,
+//     `popcount=${popcount(packed)}/${BITMAP_SIZE * BITMAP_SIZE}`,
+//     Array.from(packed, (word) => word.toString(16).padStart(8, '0')).join(' '),
+//   )
+// })
 
-const previewDir = new URL('./preview/', import.meta.url)
-mkdirSync(previewDir, { recursive: true })
-
-const previewEntries = previewChars.map((char, i) => {
-  const { canvas, imageData } = renderBinarizedChar({
-    char,
-    fontSize: notoSansJpFontSize,
-    fontFamily: NOTO_SANS_JP,
-    size: BITMAP_SIZE,
-    threshold: BINARIZE_THRESHOLD,
+function buildEntries(
+  codePoints: number[],
+  fontFamily: string,
+  fontSize: number,
+): { codePoint: number; packed: Uint32Array }[] {
+  return codePoints.map((codePoint) => {
+    const { imageData } = renderBinarizedChar({
+      char: String.fromCodePoint(codePoint),
+      fontSize,
+      fontFamily,
+      size: BITMAP_SIZE,
+      threshold: BINARIZE_THRESHOLD,
+    })
+    return { codePoint, packed: packBits(imageData) }
   })
-  exportUpscaledPreview(canvas, 10, new URL(`./${i + 1}.png`, previewDir))
+}
 
-  const packed = packBits(imageData)
-  console.log(
-    char,
-    `popcount=${popcount(packed)}/${BITMAP_SIZE * BITMAP_SIZE}`,
-    Array.from(packed, (word) => word.toString(16).padStart(8, '0')).join(' '),
-  )
+const notoSansJpCodePoints = [
+  ...ASCII,
+  ...HIRAGANA,
+  ...KATAKANA,
+  ...HALFWIDTH_KATAKANA,
+  ...FULLWIDTH_ASCII,
+  ...KANJI,
+]
 
-  return { codePoint: char.codePointAt(0)!, packed }
-})
-
-console.log('Preview characters:', previewChars.join(' '))
+const allEntries = [
+  ...buildEntries(notoSansJpCodePoints, NOTO_SANS_JP, notoSansJpFontSize),
+  ...buildEntries(SIDDHAM, NOTO_SANS_SIDDHAM, notoSansSiddhamFontSize),
+]
+console.log('Entries:', allEntries.length)
 
 const patternDbPath = new URL(
   '../../src/assets/pattern-db.bin',
   import.meta.url,
 )
-writePatternDb(previewEntries, patternDbPath)
+writePatternDb(allEntries, patternDbPath)
 console.log('Wrote pattern DB:', patternDbPath.pathname)
