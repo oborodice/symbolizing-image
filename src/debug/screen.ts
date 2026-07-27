@@ -2,6 +2,7 @@ import './screen.css'
 import { startCamera } from '../camera'
 import { binarize } from '../binarize'
 import { drawGrid, deriveGridRows, formatGridLabel } from '../grid'
+import { extractBlocks } from '../blocks'
 import { bindRange, bindCheckbox } from './controls'
 import {
   RESOLUTION_PRESETS,
@@ -172,6 +173,7 @@ export function renderDebugScreen(root: HTMLElement): void {
         binarize(imageData, threshold)
         ctx.putImageData(imageData, 0, 0)
       }
+      extractBlocks(ctx, camWidth, camHeight, gridCols, gridRows)
       if (showGrid) {
         drawGrid(ctx, camWidth, camHeight, gridCols, gridRows)
       }
