@@ -1,4 +1,3 @@
-import type { BlockRect } from './blocks'
 import type { PatternBlock } from './pattern-block'
 import type { PatternDb } from './pattern-db'
 import { packBits } from './pack-bits'
@@ -9,21 +8,19 @@ import { findNearestChar } from './match-pattern'
 export function drawMatchedChars(
   ctx: CanvasRenderingContext2D,
   blocks: PatternBlock[],
-  rects: BlockRect[],
   db: PatternDb,
   packedBlock: Uint32Array,
 ): void {
   ctx.fillStyle = 'rgb(0, 255, 0)'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  blocks.forEach((block, i) => {
-    const rect = rects[i]
+  blocks.forEach((block) => {
     packBits(block.imageData, packedBlock)
-    ctx.font = `${Math.max(8, Math.floor(rect.height * 0.8))}px sans-serif`
+    ctx.font = `${Math.max(8, Math.floor(block.height * 0.8))}px sans-serif`
     ctx.fillText(
       findNearestChar(packedBlock, db),
-      rect.x + rect.width / 2,
-      rect.y + rect.height / 2,
+      block.x + block.width / 2,
+      block.y + block.height / 2,
     )
   })
 }

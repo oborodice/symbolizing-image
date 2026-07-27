@@ -2,8 +2,8 @@ import './screen.css'
 import { startCamera } from '../camera'
 import { binarize } from '../binarize'
 import { drawGrid, deriveGridRows, formatGridLabel } from '../grid'
-import { computeBlockRects } from '../blocks'
-import { extractPatternBlocks } from '../pattern-block'
+import { computeBlockRects, type BlockRect } from '../blocks'
+import { extractPatternBlocks, type PatternBlock } from '../pattern-block'
 import { bindRange, bindCheckbox } from './controls'
 import { PATTERN_WORDS, loadPatternDb, type PatternDb } from '../pattern-db'
 import { drawMatchedChars } from '../draw-matched-chars'
@@ -158,6 +158,19 @@ export function renderDebugScreen(root: HTMLElement): void {
     },
   )
 
+  // camWidth/camHeight/gridCols/gridRowsが変わらない限り、ブロックの矩形は
+  // 毎フレーム同じ結果になるので、値が変わった時だけ再計算する
+  let cachedRects: BlockRect[] | null = null
+  let cachedRectsKey = ''
+  function getBlockRects(): BlockRect[] {
+    const key = `${camWidth}x${camHeight}:${gridCols}x${gridRows}`
+    if (!cachedRects || cachedRectsKey !== key) {
+      cachedRects = computeBlockRects(camWidth, camHeight, gridCols, gridRows)
+      cachedRectsKey = key
+    }
+    return cachedRects
+  }
+
   let stream: MediaStream | null = null
   async function restartCamera(): Promise<void> {
     if (stream) {
@@ -193,21 +206,25 @@ export function renderDebugScreen(root: HTMLElement): void {
     const interval = 1000 / fps
     if (time - lastDrawTime >= interval) {
       lastDrawTime = time
-      // ブロック抽出は常にカメラ映像を必要とするため、showCameraに関わらず描画する。
-      // 元映像を非表示にしたい場合は、抽出後に上から塗りつぶす
       ctx.drawImage(video, 0, 0, camWidth, camHeight)
-      const rects = computeBlockRects(camWidth, camHeight, gridCols, gridRows)
-      const blocks = extractPatternBlocks(canvas, rects, PATTERN_SIZE)
-      blocks.forEach((block) => {
-        binarize(block.imageData, binarizeThreshold)
-      })
+
+      const db = patternDb
+      let blocks: PatternBlock[] | null = null
+      // 切り出しの元は実際のカメラ映像でなければならないため、
+      // 下の「showCameraがOFFの時にcanvasを黒く塗りつぶす処理」より前に済ませておく
+      if (showChars && db) {
+        blocks = extractPatternBlocks(canvas, getBlockRects(), PATTERN_SIZE)
+        blocks.forEach((block) => {
+          binarize(block.imageData, binarizeThreshold)
+        })
+      }
+
       if (!showCamera) {
         ctx.fillStyle = 'black'
         ctx.fillRect(0, 0, camWidth, camHeight)
       }
-      const db = patternDb
-      if (showChars && db) {
-        drawMatchedChars(ctx, blocks, rects, db, packedBlock)
+      if (blocks && db) {
+        drawMatchedChars(ctx, blocks, db, packedBlock)
       }
       if (showGrid) {
         drawGrid(ctx, camWidth, camHeight, gridCols, gridRows)

@@ -1,9 +1,23 @@
 import type { BlockRect } from './blocks'
 
-export interface PatternBlock {
-  row: number
-  col: number
+export interface PatternBlock extends BlockRect {
   imageData: ImageData
+}
+
+// 切り出し用のcanvasは毎フレーム作り直すと無駄なので使い回す。
+// sizeが変わった場合のみ作り直す（現状は常に同じPATTERN_SIZEだが、念のため）
+let cropCanvas: HTMLCanvasElement | null = null
+let cropCtx: CanvasRenderingContext2D | null = null
+
+function getCropContext(size: number): CanvasRenderingContext2D {
+  if (!cropCtx || cropCanvas!.width !== size || cropCanvas!.height !== size) {
+    cropCanvas = document.createElement('canvas')
+    cropCanvas.width = size
+    cropCanvas.height = size
+    cropCtx = cropCanvas.getContext('2d')!
+    cropCtx.imageSmoothingQuality = 'high'
+  }
+  return cropCtx
 }
 
 // 各ブロックをcanvasのdrawImageでsize x sizeに直接切り出す。
@@ -14,15 +28,12 @@ export function extractPatternBlocks(
   rects: BlockRect[],
   size: number,
 ): PatternBlock[] {
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')!
-  ctx.imageSmoothingQuality = 'high'
+  const ctx = getCropContext(size)
 
-  return rects.map(({ row, col, x, y, width, height }) => {
+  return rects.map((rect) => {
+    const { x, y, width, height } = rect
     ctx.drawImage(source, x, y, width, height, 0, 0, size, size)
     const imageData = ctx.getImageData(0, 0, size, size)
-    return { row, col, imageData }
+    return { ...rect, imageData }
   })
 }
