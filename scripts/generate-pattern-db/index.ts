@@ -1,4 +1,5 @@
 import { GlobalFonts } from '@napi-rs/canvas'
+import { mkdirSync } from 'node:fs'
 import {
   ASCII,
   HIRAGANA,
@@ -72,23 +73,24 @@ const notoSansSiddhamFontSize = findReferenceFontSize(
 )
 console.log('Noto Sans Siddham font size:', notoSansSiddhamFontSize)
 
-const previewChar = '鬱' // 29画、複雑な漢字での潰れ具合を見る
+// 疎ら〜複雑まで幅広い文字を並べて、疎密が保たれているか確認する
+const previewChars = ['一', 'あ', 'ア', 'A', '@', '・', '鬱', '㐂', '曇', '薔', '憂', '謝']
 
-const bitmapCanvas = renderBitmap({
-  char: previewChar,
-  fontSize: notoSansJpFontSize,
-  fontFamily: NOTO_SANS_JP,
-  size: BITMAP_SIZE,
-  threshold: BINARIZE_THRESHOLD,
+const previewDir = new URL('./preview/', import.meta.url)
+mkdirSync(previewDir, { recursive: true })
+
+previewChars.forEach((char, i) => {
+  const bitmap = renderBitmap({
+    char,
+    fontSize: notoSansJpFontSize,
+    fontFamily: NOTO_SANS_JP,
+    size: BITMAP_SIZE,
+    threshold: BINARIZE_THRESHOLD,
+  })
+  exportUpscaledPreview(bitmap, 10, new URL(`./${i + 1}.png`, previewDir))
 })
 
-exportUpscaledPreview(
-  bitmapCanvas,
-  10,
-  new URL('./preview.png', import.meta.url),
-)
-
-console.log('Preview character:', previewChar)
+console.log('Preview characters:', previewChars.join(' '))
 
 // TODO: 二値化した値をUint32Arrayにビット詰め
 // TODO: バイナリファイルとして書き出す
