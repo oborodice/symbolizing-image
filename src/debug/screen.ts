@@ -3,10 +3,19 @@ import { startCamera } from '../camera'
 import { binarize } from '../binarize'
 import { drawGrid, deriveGridRows, formatGridLabel } from '../grid'
 import { computeBlockRects, type BlockRect } from '../blocks'
-import { extractPatternBlocks, type PatternBlock } from '../pattern-block'
+import {
+  extractPatternBlocks,
+  type PatternBlock,
+} from '../pattern/pattern-block'
 import { bindRange, bindCheckbox } from './controls'
-import { PATTERN_WORDS, loadPatternDb, type PatternDb } from '../pattern-db'
-import { drawMatchedChars } from '../draw-matched-chars'
+import {
+  PATTERN_WORDS,
+  loadPatternDb,
+  type PatternDb,
+} from '../pattern/pattern-db'
+import { patternDbMeta } from '../pattern/pattern-db-meta'
+import { loadFonts } from '../render/fonts'
+import { drawMatchedChars } from '../render/draw-matched-chars'
 import {
   RESOLUTION_PRESETS,
   DEFAULT_RESOLUTION,
@@ -97,6 +106,11 @@ export function renderDebugScreen(root: HTMLElement): void {
   let patternDb: PatternDb | null = null
   void loadPatternDb().then((db) => {
     patternDb = db
+  })
+
+  let fontsReady = false
+  void loadFonts().then(() => {
+    fontsReady = true
   })
 
   let camWidth = DEFAULT_RESOLUTION.width
@@ -217,7 +231,13 @@ export function renderDebugScreen(root: HTMLElement): void {
     const interval = 1000 / fps
     if (time - lastDrawTime >= interval) {
       lastDrawTime = time
-      ctx.drawImage(video, 0, 0, camWidth, camHeight)
+      // カメラ映像だけを鏡のように左右反転させる（自然な自撮り視点にするため）。
+      // canvas全体をCSSで反転すると、後で描く文字まで鏡文字になってしまうため、
+      // この映像描画だけを一時的に反転させ、文字の描画には影響させない
+      ctx.save()
+      ctx.scale(-1, 1)
+      ctx.drawImage(video, -camWidth, 0, camWidth, camHeight)
+      ctx.restore()
 
       const db = patternDb
       let blocks: PatternBlock[] | null = null
@@ -234,8 +254,8 @@ export function renderDebugScreen(root: HTMLElement): void {
         ctx.fillStyle = 'black'
         ctx.fillRect(0, 0, camWidth, camHeight)
       }
-      if (blocks && db) {
-        drawMatchedChars(ctx, blocks, db, packedBlock)
+      if (blocks && db && fontsReady) {
+        drawMatchedChars(ctx, blocks, db, patternDbMeta, packedBlock)
       }
       if (showGrid) {
         drawGrid(ctx, camWidth, camHeight, gridCols, gridRows)

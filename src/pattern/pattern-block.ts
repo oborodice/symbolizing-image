@@ -1,4 +1,4 @@
-import type { BlockRect } from './blocks'
+import type { BlockRect } from '../blocks'
 
 export interface PatternBlock extends BlockRect {
   imageData: ImageData

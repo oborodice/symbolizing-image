@@ -1,5 +1,5 @@
-import patternDbUrl from './assets/pattern-db.bin?url'
-import { PATTERN_SIZE } from './config'
+import patternDbUrl from '../assets/pattern-db.bin?url'
+import { PATTERN_SIZE } from '../config'
 
 // パターンDBのレコード形式は、書き込み側(scripts/generate-pattern-db/write-pattern-db.ts)と対応させる:
 // 4バイトのコードポイント + パターンのビット列(Uint32 x PATTERN_WORDS、リトルエンディアン)

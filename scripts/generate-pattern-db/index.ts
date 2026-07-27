@@ -1,4 +1,5 @@
 import { GlobalFonts } from '@napi-rs/canvas'
+import { writeFileSync } from 'node:fs'
 // import { mkdirSync } from 'node:fs'
 import {
   ASCII,
@@ -75,6 +76,18 @@ const notoSansSiddhamFontSize = findReferenceFontSize(
   BINARIZE_THRESHOLD,
 )
 console.log('Noto Sans Siddham font size:', notoSansSiddhamFontSize)
+
+// ライブカメラ側（表示時に文字を描き直す処理）が、同じ「基準フォントサイズ」を
+// 再計算せずに済むよう、算出結果をpattern-db.binとは別の小さなメタデータとして書き出す
+const patternDbMetaPath = new URL(
+  '../../src/assets/pattern-db-meta.json',
+  import.meta.url,
+)
+writeFileSync(
+  patternDbMetaPath,
+  JSON.stringify({ notoSansJpFontSize, notoSansSiddhamFontSize }),
+)
+console.log('Wrote pattern DB meta:', patternDbMetaPath.pathname)
 
 // 疎ら〜複雑まで幅広い文字を並べて、疎密が保たれているか確認する
 // const previewChars = ['一', 'あ', 'ア', 'A', '@', '・', '鬱', '㐂', '曇', '薔', '憂', '謝']
