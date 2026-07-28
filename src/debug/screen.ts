@@ -42,7 +42,7 @@ const DEFAULT_GRID_COLS = 40
 
 const MIN_BINARIZE_THRESHOLD = 0
 const MAX_BINARIZE_THRESHOLD = 255
-const BINARIZE_THRESHOLD = 128
+const DEFAULT_BINARIZE_THRESHOLD = 128
 
 const DEFAULT_SHOW_GRID = false
 const DEFAULT_SHOW_CAMERA = true
@@ -66,8 +66,8 @@ export function renderDebugScreen(root: HTMLElement): void {
         <input id="fps-slider" type="range" min="${MIN_FPS}" max="${MAX_FPS}" value="${DEFAULT_FPS}" />
       </label>
       <label>
-        Binarize threshold: <span id="binarize-threshold-value">${BINARIZE_THRESHOLD}</span>
-        <input id="binarize-threshold-slider" type="range" min="${MIN_BINARIZE_THRESHOLD}" max="${MAX_BINARIZE_THRESHOLD}" value="${BINARIZE_THRESHOLD}" />
+        Binarize threshold: <span id="binarize-threshold-value">${DEFAULT_BINARIZE_THRESHOLD}</span>
+        <input id="binarize-threshold-slider" type="range" min="${MIN_BINARIZE_THRESHOLD}" max="${MAX_BINARIZE_THRESHOLD}" value="${DEFAULT_BINARIZE_THRESHOLD}" />
       </label>
       <label>
         <input id="show-camera-toggle" type="checkbox" ${DEFAULT_SHOW_CAMERA ? 'checked' : ''} />
@@ -139,7 +139,7 @@ export function renderDebugScreen(root: HTMLElement): void {
     fps = value
   })
 
-  let binarizeThreshold = BINARIZE_THRESHOLD
+  let binarizeThreshold = DEFAULT_BINARIZE_THRESHOLD
   const setBinarizeThreshold = bindRange(
     binarizeThresholdSlider,
     binarizeThresholdValue,
@@ -203,11 +203,13 @@ export function renderDebugScreen(root: HTMLElement): void {
   })
 
   resetButton.addEventListener('click', async () => {
-    resolutionSelect.value = '0'
+    resolutionSelect.value = String(
+      RESOLUTION_PRESETS.indexOf(DEFAULT_RESOLUTION),
+    )
     applyResolution(DEFAULT_RESOLUTION.width, DEFAULT_RESOLUTION.height)
     setFps(DEFAULT_FPS)
     setGridCols(DEFAULT_GRID_COLS)
-    setBinarizeThreshold(BINARIZE_THRESHOLD)
+    setBinarizeThreshold(DEFAULT_BINARIZE_THRESHOLD)
     setShowCamera(DEFAULT_SHOW_CAMERA)
     setShowChars(DEFAULT_SHOW_CHARS)
     setShowGrid(DEFAULT_SHOW_GRID)
