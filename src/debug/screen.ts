@@ -185,23 +185,12 @@ export function renderDebugScreen(root: HTMLElement): void {
   // camWidth/camHeight/gridCols/gridRowsが変わらない限り、ブロックの矩形は
   // 毎フレーム同じ結果になるので、値が変わった時だけ再計算する
   let cachedRects: BlockRect[] | null = null
-  let cachedCamWidth = -1
-  let cachedCamHeight = -1
-  let cachedGridCols = -1
-  let cachedGridRows = -1
+  let cachedKey: readonly [number, number, number, number] | null = null
   function getBlockRects(): BlockRect[] {
-    if (
-      !cachedRects ||
-      cachedCamWidth !== camWidth ||
-      cachedCamHeight !== camHeight ||
-      cachedGridCols !== gridCols ||
-      cachedGridRows !== gridRows
-    ) {
+    const key = [camWidth, camHeight, gridCols, gridRows] as const
+    if (!cachedRects || key.some((value, i) => value !== cachedKey![i])) {
       cachedRects = computeBlockRects(camWidth, camHeight, gridCols, gridRows)
-      cachedCamWidth = camWidth
-      cachedCamHeight = camHeight
-      cachedGridCols = gridCols
-      cachedGridRows = gridRows
+      cachedKey = key
     }
     return cachedRects
   }
