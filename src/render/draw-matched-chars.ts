@@ -7,21 +7,20 @@ import { fontForChar } from './font-for-char'
 import { drawCharCentered } from './draw-char-centered'
 import { PATTERN_SIZE } from '../config'
 
-// 各ブロックについて最も近い文字を探し、そのブロックの位置に描画する。
 // packedBlockは呼び出し側が使い回す前提(packBits参照)
 export function drawMatchedChars(
   ctx: CanvasRenderingContext2D,
   blocks: PatternBlock[],
-  db: PatternDb,
-  meta: PatternDbMeta,
+  patternDb: PatternDb,
+  patternDbMeta: PatternDbMeta,
   packedBlock: Uint32Array,
   color: string,
 ): void {
   ctx.fillStyle = color
   blocks.forEach((block) => {
     packBits(block.imageData, packedBlock)
-    const char = findNearestChar(packedBlock, db)
-    const { fontFamily, referenceFontSize } = fontForChar(char, meta)
+    const char = findNearestChar(packedBlock, patternDb)
+    const { fontFamily, referenceFontSize } = fontForChar(char, patternDbMeta)
 
     // 基準フォントサイズはPATTERN_SIZE(24px四方)を基準に求めたものなので、
     // ブロックの実際のサイズに合わせて比例でスケールする

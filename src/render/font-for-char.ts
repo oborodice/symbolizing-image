@@ -12,16 +12,19 @@ export interface FontForChar {
 
 // 選ばれた文字のコードポイントから、描画に使うフォントと、そのフォントの
 // 基準フォントサイズ（生成側で計算済みのもの）を判定する
-export function fontForChar(char: string, meta: PatternDbMeta): FontForChar {
+export function fontForChar(
+  char: string,
+  patternDbMeta: PatternDbMeta,
+): FontForChar {
   const codePoint = char.codePointAt(0)!
   if (codePoint >= SIDDHAM_START && codePoint <= SIDDHAM_END) {
     return {
       fontFamily: NOTO_SANS_SIDDHAM,
-      referenceFontSize: meta.notoSansSiddhamFontSize,
+      referenceFontSize: patternDbMeta.notoSansSiddhamFontSize,
     }
   }
   return {
     fontFamily: NOTO_SANS_JP,
-    referenceFontSize: meta.notoSansJpFontSize,
+    referenceFontSize: patternDbMeta.notoSansJpFontSize,
   }
 }

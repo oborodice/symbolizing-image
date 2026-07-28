@@ -116,8 +116,8 @@ export function renderDebugScreen(root: HTMLElement): void {
   const resetButton = root.querySelector<HTMLButtonElement>('#reset-button')!
   const packedBlock = new Uint32Array(PATTERN_WORDS)
   let patternDbRef: PatternDb | null = null
-  void loadPatternDb().then((db) => {
-    patternDbRef = db
+  void loadPatternDb().then((patternDb) => {
+    patternDbRef = patternDb
   })
 
   let fontsReady = false

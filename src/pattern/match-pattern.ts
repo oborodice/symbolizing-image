@@ -4,8 +4,11 @@ import { popcount32 } from './popcount'
 // packedと最もハミング距離が近いパターンの文字を探す。
 // 距離の途中計算がこれまでの最小値以上になった時点で打ち切る(早期終了)ことで、
 // 明らかに負けているパターンを最後まで計算せずに済ませている
-export function findNearestChar(packed: Uint32Array, db: PatternDb): string {
-  const { chars, patterns, entryCount } = db
+export function findNearestChar(
+  packed: Uint32Array,
+  patternDb: PatternDb,
+): string {
+  const { chars, patterns, entryCount } = patternDb
   let bestIndex = 0
   let bestDistance = Infinity
 
