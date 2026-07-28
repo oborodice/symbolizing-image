@@ -243,11 +243,11 @@ export function renderDebugScreen(root: HTMLElement): void {
     }
 
     if (!showCamera) {
-      fillCanvas(ctx, camWidth, camHeight, 'white')
+      fillCanvas(ctx, camWidth, camHeight, 'rgb(255, 255, 255)')
     }
     if (blocks && patternDb && fontsReady) {
       // 映像に重ねる時は緑(視認性重視)、白背景の上では黒にする
-      const charColor = showCamera ? 'rgb(0, 255, 0)' : 'black'
+      const charColor = showCamera ? 'rgb(0, 255, 0)' : 'rgb(0, 0, 0)'
       drawMatchedChars(
         ctx,
         blocks,
