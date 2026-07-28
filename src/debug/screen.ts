@@ -1,11 +1,11 @@
 import './screen.css'
 import { startCamera } from '../camera'
-import { binarize } from '../binarize'
 import { deriveGridRows } from '../grid'
 import { drawGrid, formatGridLabel } from './grid'
 import { computeBlockRects, type BlockRect } from '../blocks'
 import {
   extractPatternBlocks,
+  binarizeBlocks,
   type PatternBlock,
 } from '../pattern/pattern-block'
 import { bindRange, bindCheckbox } from './controls'
@@ -114,9 +114,9 @@ export function renderDebugScreen(root: HTMLElement): void {
   const gridValue = root.querySelector<HTMLSpanElement>('#grid-value')!
   const resetButton = root.querySelector<HTMLButtonElement>('#reset-button')!
   const packedBlock = new Uint32Array(PATTERN_WORDS)
-  let patternDb: PatternDb | null = null
+  let patternDbRef: PatternDb | null = null
   void loadPatternDb().then((db) => {
-    patternDb = db
+    patternDbRef = db
   })
 
   let fontsReady = false
@@ -232,23 +232,21 @@ export function renderDebugScreen(root: HTMLElement): void {
 
     drawMirroredCamera(ctx, video, camWidth, camHeight)
 
-    const db = patternDb
+    const patternDb = patternDbRef
     let blocks: PatternBlock[] | null = null
     // 切り出しの元は実際のカメラ映像でなければならないため、
     // 下の「showCameraがOFFの時にcanvasを黒く塗りつぶす処理」より前に済ませておく
-    if (showChars && db) {
+    if (showChars && patternDb) {
       blocks = extractPatternBlocks(canvas, getBlockRects(), PATTERN_SIZE)
-      blocks.forEach((block) => {
-        binarize(block.imageData, binarizeThreshold)
-      })
+      binarizeBlocks(blocks, binarizeThreshold)
     }
 
     if (!showCamera) {
       ctx.fillStyle = 'black'
       ctx.fillRect(0, 0, camWidth, camHeight)
     }
-    if (blocks && db && fontsReady) {
-      drawMatchedChars(ctx, blocks, db, patternDbMeta, packedBlock)
+    if (blocks && patternDb && fontsReady) {
+      drawMatchedChars(ctx, blocks, patternDb, patternDbMeta, packedBlock)
     }
     if (showGrid) {
       drawGrid(ctx, camWidth, camHeight, gridCols, gridRows)

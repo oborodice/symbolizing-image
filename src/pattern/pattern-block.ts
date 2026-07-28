@@ -1,4 +1,5 @@
 import type { BlockRect } from '../blocks'
+import { binarize } from '../binarize'
 
 export interface PatternBlock extends BlockRect {
   imageData: ImageData
@@ -9,17 +10,17 @@ export interface PatternBlock extends BlockRect {
 let cropCtx: CanvasRenderingContext2D | null = null
 
 function getCropContext(size: number): CanvasRenderingContext2D {
-  if (!cropCtx || cropCtx.canvas.width !== size || cropCtx.canvas.height !== size) {
-    const canvas = document.createElement('canvas')
-    canvas.width = size
-    canvas.height = size
-    cropCtx = canvas.getContext('2d')!
-    cropCtx.imageSmoothingQuality = 'high'
+  if (cropCtx && cropCtx.canvas.width === size) {
+    return cropCtx
   }
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  cropCtx = canvas.getContext('2d')!
+  cropCtx.imageSmoothingQuality = 'high'
   return cropCtx
 }
 
-// 各ブロックをcanvasのdrawImageでsize x sizeに直接切り出す。
 // 生ピクセルをJS側に読み出してから自前でリサイズするのではなく、
 // crop(切り出し範囲の指定)とresizeをブラウザのcanvas合成パイプラインにまとめて任せている
 export function extractPatternBlocks(
@@ -35,4 +36,8 @@ export function extractPatternBlocks(
     const imageData = ctx.getImageData(0, 0, size, size)
     return { ...rect, imageData }
   })
+}
+
+export function binarizeBlocks(blocks: PatternBlock[], threshold: number): void {
+  blocks.forEach((block) => binarize(block.imageData, threshold))
 }
