@@ -17,6 +17,7 @@ import {
 import { patternDbMeta } from '../pattern/pattern-db-meta'
 import { loadFonts } from '../render/fonts'
 import { drawMatchedChars } from '../render/draw-matched-chars'
+import { drawMirroredCamera } from '../render/draw-mirrored-camera'
 import { PATTERN_SIZE } from '../config'
 
 interface Resolution {
@@ -220,41 +221,38 @@ export function renderDebugScreen(root: HTMLElement): void {
   startCamera(video, camWidth, camHeight)
 
   let lastDrawTime = 0
-  function loop(time: number) {
-    const interval = 1000 / fps
-    if (time - lastDrawTime >= interval) {
-      lastDrawTime = time
-      // カメラ映像だけを鏡のように左右反転させる（自然な自撮り視点にするため）。
-      // canvas全体をCSSで反転すると、後で描く文字まで鏡文字になってしまうため、
-      // この映像描画だけを一時的に反転させ、文字の描画には影響させない
-      ctx.save()
-      ctx.scale(-1, 1)
-      ctx.drawImage(video, -camWidth, 0, camWidth, camHeight)
-      ctx.restore()
-
-      const db = patternDb
-      let blocks: PatternBlock[] | null = null
-      // 切り出しの元は実際のカメラ映像でなければならないため、
-      // 下の「showCameraがOFFの時にcanvasを黒く塗りつぶす処理」より前に済ませておく
-      if (showChars && db) {
-        blocks = extractPatternBlocks(canvas, getBlockRects(), PATTERN_SIZE)
-        blocks.forEach((block) => {
-          binarize(block.imageData, binarizeThreshold)
-        })
-      }
-
-      if (!showCamera) {
-        ctx.fillStyle = 'black'
-        ctx.fillRect(0, 0, camWidth, camHeight)
-      }
-      if (blocks && db && fontsReady) {
-        drawMatchedChars(ctx, blocks, db, patternDbMeta, packedBlock)
-      }
-      if (showGrid) {
-        drawGrid(ctx, camWidth, camHeight, gridCols, gridRows)
-      }
-    }
+  function loop(timestamp: number) {
     requestAnimationFrame(loop)
+
+    const interval = 1000 / fps
+    if (timestamp - lastDrawTime < interval) {
+      return
+    }
+    lastDrawTime = timestamp
+
+    drawMirroredCamera(ctx, video, camWidth, camHeight)
+
+    const db = patternDb
+    let blocks: PatternBlock[] | null = null
+    // 切り出しの元は実際のカメラ映像でなければならないため、
+    // 下の「showCameraがOFFの時にcanvasを黒く塗りつぶす処理」より前に済ませておく
+    if (showChars && db) {
+      blocks = extractPatternBlocks(canvas, getBlockRects(), PATTERN_SIZE)
+      blocks.forEach((block) => {
+        binarize(block.imageData, binarizeThreshold)
+      })
+    }
+
+    if (!showCamera) {
+      ctx.fillStyle = 'black'
+      ctx.fillRect(0, 0, camWidth, camHeight)
+    }
+    if (blocks && db && fontsReady) {
+      drawMatchedChars(ctx, blocks, db, patternDbMeta, packedBlock)
+    }
+    if (showGrid) {
+      drawGrid(ctx, camWidth, camHeight, gridCols, gridRows)
+    }
   }
   requestAnimationFrame(loop)
 }
