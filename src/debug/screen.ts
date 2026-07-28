@@ -1,7 +1,8 @@
 import './screen.css'
 import { startCamera } from '../camera'
 import { binarize } from '../binarize'
-import { drawGrid, deriveGridRows, formatGridLabel } from '../grid'
+import { deriveGridRows } from '../grid'
+import { drawGrid, formatGridLabel } from './grid'
 import { computeBlockRects, type BlockRect } from '../blocks'
 import {
   extractPatternBlocks,
@@ -16,23 +17,32 @@ import {
 import { patternDbMeta } from '../pattern/pattern-db-meta'
 import { loadFonts } from '../render/fonts'
 import { drawMatchedChars } from '../render/draw-matched-chars'
-import {
-  RESOLUTION_PRESETS,
-  DEFAULT_RESOLUTION,
-  DEFAULT_GRID_COLS,
-  DEFAULT_FPS,
-  BINARIZE_THRESHOLD,
-  PATTERN_SIZE,
-} from '../config'
+import { PATTERN_SIZE } from '../config'
+
+interface Resolution {
+  width: number
+  height: number
+  label: string
+}
+
+const RESOLUTION_PRESETS: Resolution[] = [
+  { width: 640, height: 480, label: '640x480 (4:3)' },
+  { width: 1280, height: 720, label: '1280x720 (16:9)' },
+  { width: 1920, height: 1080, label: '1920x1080 (16:9)' },
+]
+const DEFAULT_RESOLUTION = RESOLUTION_PRESETS[0]
 
 const MIN_FPS = 1
 const MAX_FPS = 30
+const DEFAULT_FPS = 15
 
 const MIN_GRID_COLS = 10
 const MAX_GRID_COLS = 100
+const DEFAULT_GRID_COLS = 40
 
 const MIN_BINARIZE_THRESHOLD = 0
 const MAX_BINARIZE_THRESHOLD = 255
+const BINARIZE_THRESHOLD = 128
 
 const DEFAULT_SHOW_GRID = false
 const DEFAULT_SHOW_CAMERA = true
