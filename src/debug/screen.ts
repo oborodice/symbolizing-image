@@ -235,18 +235,27 @@ export function renderDebugScreen(root: HTMLElement): void {
     const patternDb = patternDbRef
     let blocks: PatternBlock[] | null = null
     // 切り出しの元は実際のカメラ映像でなければならないため、
-    // 下の「showCameraがOFFの時にcanvasを黒く塗りつぶす処理」より前に済ませておく
+    // 下の「showCameraがOFFの時にcanvasを白く塗りつぶす処理」より前に済ませておく
     if (showChars && patternDb) {
       blocks = extractPatternBlocks(canvas, getBlockRects(), PATTERN_SIZE)
       binarizeBlocks(blocks, binarizeThreshold)
     }
 
     if (!showCamera) {
-      ctx.fillStyle = 'black'
+      ctx.fillStyle = 'white'
       ctx.fillRect(0, 0, camWidth, camHeight)
     }
     if (blocks && patternDb && fontsReady) {
-      drawMatchedChars(ctx, blocks, patternDb, patternDbMeta, packedBlock)
+      // 映像に重ねる時は緑(視認性重視)、白背景の上では黒にする
+      const charColor = showCamera ? 'rgb(0, 255, 0)' : 'black'
+      drawMatchedChars(
+        ctx,
+        blocks,
+        patternDb,
+        patternDbMeta,
+        packedBlock,
+        charColor,
+      )
     }
     if (showGrid) {
       drawGrid(ctx, camWidth, camHeight, gridCols, gridRows)

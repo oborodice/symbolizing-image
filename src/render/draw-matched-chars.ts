@@ -15,8 +15,9 @@ export function drawMatchedChars(
   db: PatternDb,
   meta: PatternDbMeta,
   packedBlock: Uint32Array,
+  color: string,
 ): void {
-  ctx.fillStyle = 'rgb(0, 255, 0)'
+  ctx.fillStyle = color
   blocks.forEach((block) => {
     packBits(block.imageData, packedBlock)
     const char = findNearestChar(packedBlock, db)
