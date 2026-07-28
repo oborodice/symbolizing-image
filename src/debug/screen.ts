@@ -195,19 +195,11 @@ export function renderDebugScreen(root: HTMLElement): void {
     return cachedRects
   }
 
-  let stream: MediaStream | null = null
-  async function restartCamera(): Promise<void> {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop())
-    }
-    stream = await startCamera(video, camWidth, camHeight)
-  }
-
   resolutionSelect.addEventListener('change', async () => {
     const preset = RESOLUTION_PRESETS[Number(resolutionSelect.value)]
     applyResolution(preset.width, preset.height)
     setGridCols(gridCols)
-    await restartCamera()
+    await startCamera(video, camWidth, camHeight)
   })
 
   resetButton.addEventListener('click', async () => {
@@ -219,11 +211,11 @@ export function renderDebugScreen(root: HTMLElement): void {
     setShowCamera(DEFAULT_SHOW_CAMERA)
     setShowChars(DEFAULT_SHOW_CHARS)
     setShowGrid(DEFAULT_SHOW_GRID)
-    await restartCamera()
+    await startCamera(video, camWidth, camHeight)
   })
 
   applyResolution(camWidth, camHeight)
-  restartCamera()
+  startCamera(video, camWidth, camHeight)
 
   let lastDrawTime = 0
   function loop(time: number) {
