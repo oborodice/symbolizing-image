@@ -18,6 +18,7 @@ import { patternDbMeta } from '../pattern/pattern-db-meta'
 import { loadFonts } from '../render/fonts'
 import { drawMatchedChars } from '../render/draw-matched-chars'
 import { drawMirroredCamera } from '../render/draw-mirrored-camera'
+import { fillCanvas } from '../render/fill-canvas'
 import { PATTERN_SIZE } from '../config'
 
 interface Resolution {
@@ -242,8 +243,7 @@ export function renderDebugScreen(root: HTMLElement): void {
     }
 
     if (!showCamera) {
-      ctx.fillStyle = 'white'
-      ctx.fillRect(0, 0, camWidth, camHeight)
+      fillCanvas(ctx, camWidth, camHeight, 'white')
     }
     if (blocks && patternDb && fontsReady) {
       // 映像に重ねる時は緑(視認性重視)、白背景の上では黒にする
