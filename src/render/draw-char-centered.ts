@@ -17,16 +17,17 @@ export function drawCharCentered(
   ctx.font = `${fontSize}px "${fontFamily}"`
 
   const metrics = ctx.measureText(char)
-  const width = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight
-  const height =
+  const inkWidth = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight
+  const inkHeight =
     metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
 
   // 空白等、インクが無い文字は何も描かない
-  if (width === 0 || height === 0) {
+  if (inkWidth === 0 || inkHeight === 0) {
     return
   }
 
-  const x = rectX + (rectWidth - width) / 2 + metrics.actualBoundingBoxLeft
-  const y = rectY + (rectHeight - height) / 2 + metrics.actualBoundingBoxAscent
+  const x = rectX + (rectWidth - inkWidth) / 2 + metrics.actualBoundingBoxLeft
+  const y =
+    rectY + (rectHeight - inkHeight) / 2 + metrics.actualBoundingBoxAscent
   ctx.fillText(char, x, y)
 }

@@ -10,8 +10,6 @@ export interface FontForChar {
   referenceFontSize: number
 }
 
-// 選ばれた文字のコードポイントから、描画に使うフォントと、そのフォントの
-// 基準フォントサイズ（生成側で計算済みのもの）を判定する
 export function fontForChar(
   char: string,
   patternDbMeta: PatternDbMeta,
