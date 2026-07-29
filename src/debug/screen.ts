@@ -261,7 +261,13 @@ export function renderDebugScreen(root: HTMLElement): void {
     // 切り出しの元は実際のカメラ映像でなければならないため、
     // 下の「showCameraがOFFの時にcanvasを白く塗りつぶす処理」より前に済ませておく
     if (showChars && patternDb) {
-      blocks = extractPatternBlocks(canvas, getBlockRects(), PATTERN_SIZE)
+      blocks = extractPatternBlocks(
+        canvas,
+        getBlockRects(),
+        PATTERN_SIZE,
+        gridCols,
+        gridRows,
+      )
       binarizeBlocks(blocks, binarizeThreshold)
     }
 
