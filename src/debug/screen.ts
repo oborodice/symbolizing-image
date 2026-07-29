@@ -67,6 +67,7 @@ export function renderDebugScreen(root: HTMLElement): void {
         FPS: <span id="fps-value">${DEFAULT_FPS}</span>
         <input id="fps-slider" type="range" min="${MIN_FPS}" max="${MAX_FPS}" value="${DEFAULT_FPS}" />
       </label>
+      <div>Actual FPS: <span id="actual-fps-value">-</span></div>
       <label>
         Binarize threshold: <span id="binarize-threshold-value">${DEFAULT_BINARIZE_THRESHOLD}</span>
         <input id="binarize-threshold-slider" type="range" min="${MIN_BINARIZE_THRESHOLD}" max="${MAX_BINARIZE_THRESHOLD}" value="${DEFAULT_BINARIZE_THRESHOLD}" />
@@ -98,6 +99,9 @@ export function renderDebugScreen(root: HTMLElement): void {
     root.querySelector<HTMLSelectElement>('#resolution-select')!
   const fpsSlider = root.querySelector<HTMLInputElement>('#fps-slider')!
   const fpsValue = root.querySelector<HTMLSpanElement>('#fps-value')!
+  const actualFpsValue = root.querySelector<HTMLSpanElement>(
+    '#actual-fps-value',
+  )!
   const binarizeThresholdSlider = root.querySelector<HTMLInputElement>(
     '#binarize-threshold-slider',
   )!
@@ -222,6 +226,24 @@ export function renderDebugScreen(root: HTMLElement): void {
   startCamera(video, camWidth, camHeight)
 
   let lastDrawTime = 0
+
+  // 直近1秒間に実際に描画できた回数を集計し、狙っているfpsとの差を可視化する
+  let actualFrameCount = 0
+  let actualFpsWindowStart = 0
+  function recordActualFrame(timestamp: number): void {
+    actualFrameCount++
+    const elapsed = timestamp - actualFpsWindowStart
+    if (elapsed < 1000) {
+      return
+    }
+    actualFpsValue.textContent = (
+      actualFrameCount /
+      (elapsed / 1000)
+    ).toFixed(1)
+    actualFrameCount = 0
+    actualFpsWindowStart = timestamp
+  }
+
   function loop(timestamp: number) {
     requestAnimationFrame(loop)
 
@@ -230,6 +252,7 @@ export function renderDebugScreen(root: HTMLElement): void {
       return
     }
     lastDrawTime = timestamp
+    recordActualFrame(timestamp)
 
     drawMirroredCamera(ctx, video, camWidth, camHeight)
 
