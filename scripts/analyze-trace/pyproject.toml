@@ -1,0 +1,8 @@
+[project]
+name = "analyze-trace"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.14"
+dependencies = [
+    "perfetto>=0.57.2",
+]
