@@ -21,6 +21,45 @@ function getFontString(fontSize: FontSize, fontFamily: FontFamily): FontString {
   return fontString
 }
 
+// ctx.measureText()が返すTextMetricsのうち、実際に使う4つの値だけを保持する
+interface InkMetrics {
+  left: number
+  right: number
+  ascent: number
+  descent: number
+}
+
+// 同じ(fontString, char)の組み合わせなら計測結果は変わらないため、
+// 呼び出しごとの新規TextMetrics生成を避けてキャッシュする
+type InkMetricsByChar = Map<string, InkMetrics>
+const inkMetricsCache = new Map<FontString, InkMetricsByChar>()
+
+// measureTextの結果はctx.fontに実際に設定されているフォントに依存するため、
+// 呼び出し前にctx.fontをfontStringと一致させておく必要がある(この関数自身は設定しない)
+function getInkMetrics(
+  ctx: CanvasRenderingContext2D,
+  char: string,
+  fontString: FontString,
+): InkMetrics {
+  let byChar = inkMetricsCache.get(fontString)
+  if (!byChar) {
+    byChar = new Map<string, InkMetrics>()
+    inkMetricsCache.set(fontString, byChar)
+  }
+  let metrics = byChar.get(char)
+  if (!metrics) {
+    const measured = ctx.measureText(char)
+    metrics = {
+      left: measured.actualBoundingBoxLeft,
+      right: measured.actualBoundingBoxRight,
+      ascent: measured.actualBoundingBoxAscent,
+      descent: measured.actualBoundingBoxDescent,
+    }
+    byChar.set(char, metrics)
+  }
+  return metrics
+}
+
 // 指定されたフォントサイズで、文字のインク(実際に黒く塗られる領域)が
 // 指定した矩形の中央に来るよう位置だけを調整して描画する。
 // 生成側(scripts/generate-pattern-db/center-char.ts)のdrawCharCenteredと同じ考え方だが、
@@ -37,20 +76,19 @@ export function drawCharCentered(
 ): void {
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
-  ctx.font = getFontString(fontSize, fontFamily)
+  const fontString = getFontString(fontSize, fontFamily)
+  ctx.font = fontString
 
-  const metrics = ctx.measureText(char)
-  const inkWidth = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight
-  const inkHeight =
-    metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
+  const metrics = getInkMetrics(ctx, char, fontString)
+  const inkWidth = metrics.left + metrics.right
+  const inkHeight = metrics.ascent + metrics.descent
 
   // 空白等、インクが無い文字は何も描かない
   if (inkWidth === 0 || inkHeight === 0) {
     return
   }
 
-  const x = rectX + (rectWidth - inkWidth) / 2 + metrics.actualBoundingBoxLeft
-  const y =
-    rectY + (rectHeight - inkHeight) / 2 + metrics.actualBoundingBoxAscent
+  const x = rectX + (rectWidth - inkWidth) / 2 + metrics.left
+  const y = rectY + (rectHeight - inkHeight) / 2 + metrics.ascent
   ctx.fillText(char, x, y)
 }
