@@ -1,6 +1,5 @@
 import { GlobalFonts } from '@napi-rs/canvas'
 import { writeFileSync } from 'node:fs'
-// import { mkdirSync } from 'node:fs'
 import {
   ASCII,
   HIRAGANA,
@@ -11,10 +10,8 @@ import {
   KANJI,
 } from './charset.ts'
 import { renderBinarizedChar } from './binarized-char.ts'
-// import { exportUpscaledPreview } from './preview.ts'
 import { findReferenceFontSize } from './reference-font-size.ts'
 import { packBits } from './pack-bits.ts'
-// import { popcount } from './pack-bits.ts'
 import { writePatternDb } from './write-pattern-db.ts'
 
 const charsets = {
@@ -88,30 +85,6 @@ writeFileSync(
   JSON.stringify({ notoSansJpFontSize, notoSansSiddhamFontSize }),
 )
 console.log('Wrote pattern DB meta:', patternDbMetaPath.pathname)
-
-// 疎ら〜複雑まで幅広い文字を並べて、疎密が保たれているか確認する
-// const previewChars = ['一', 'あ', 'ア', 'A', '@', '・', '鬱', '㐂', '曇', '薔', '憂', '謝']
-//
-// const previewDir = new URL('./preview/', import.meta.url)
-// mkdirSync(previewDir, { recursive: true })
-//
-// previewChars.forEach((char, i) => {
-//   const { canvas, imageData } = renderBinarizedChar({
-//     char,
-//     fontSize: notoSansJpFontSize,
-//     fontFamily: NOTO_SANS_JP,
-//     size: PATTERN_SIZE,
-//     threshold: BINARIZE_THRESHOLD,
-//   })
-//   exportUpscaledPreview(canvas, 10, new URL(`./${i + 1}.png`, previewDir))
-//
-//   const packed = packBits(imageData)
-//   console.log(
-//     char,
-//     `popcount=${popcount(packed)}/${PATTERN_SIZE * PATTERN_SIZE}`,
-//     Array.from(packed, (word) => word.toString(16).padStart(8, '0')).join(' '),
-//   )
-// })
 
 function buildEntries(
   codePoints: number[],

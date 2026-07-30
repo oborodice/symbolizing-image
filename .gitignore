@@ -15,7 +15,6 @@ dist-ssr
 # Generated pattern DB
 src/assets/pattern-db.bin
 src/assets/pattern-db-meta.json
-scripts/generate-pattern-db/preview
 
 # Editor directories and files
 .vscode/*
