@@ -1,5 +1,6 @@
 import patternDbUrl from '../assets/pattern-db.bin?url'
 import { PATTERN_SIZE } from '../config'
+import { popcount32 } from './popcount'
 
 // レコードのバイトレイアウト。書き込み側(scripts/generate-pattern-db/write-pattern-db.ts)と一致させること
 // (全てリトルエンディアン):
@@ -15,6 +16,10 @@ const PATTERN_RECORD_BYTES = BYTES_PER_WORD + PATTERN_WORDS * BYTES_PER_WORD
 export interface PatternDb {
   chars: string[]
   patterns: Uint32Array
+  // popcounts[i]はpatterns[i*PATTERN_WORDS..]のpopcountの合計。エントリは生成側
+  // (scripts/generate-pattern-db/index.ts)でpopcount順にソート済みのため、この配列も
+  // 単調増加になる(match-pattern.tsの二分探索が前提とする不変条件)
+  popcounts: Uint32Array
   entryCount: number
 }
 
@@ -33,6 +38,22 @@ function readRecord(
   return { char, pattern }
 }
 
+function computePopcounts(
+  patterns: Uint32Array,
+  entryCount: number,
+): Uint32Array {
+  const popcounts = new Uint32Array(entryCount)
+  for (let entryIndex = 0; entryIndex < entryCount; entryIndex++) {
+    const patternOffset = entryIndex * PATTERN_WORDS
+    let total = 0
+    for (let wordIndex = 0; wordIndex < PATTERN_WORDS; wordIndex++) {
+      total += popcount32(patterns[patternOffset + wordIndex])
+    }
+    popcounts[entryIndex] = total
+  }
+  return popcounts
+}
+
 function parsePatternDb(buffer: ArrayBuffer): PatternDb {
   const entryCount = buffer.byteLength / PATTERN_RECORD_BYTES
   const chars = new Array<string>(entryCount)
@@ -48,7 +69,9 @@ function parsePatternDb(buffer: ArrayBuffer): PatternDb {
     patterns.set(pattern, entryIndex * PATTERN_WORDS)
   }
 
-  return { chars, patterns, entryCount }
+  const popcounts = computePopcounts(patterns, entryCount)
+
+  return { chars, patterns, popcounts, entryCount }
 }
 
 export async function loadPatternDb(): Promise<PatternDb> {

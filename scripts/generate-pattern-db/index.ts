@@ -11,7 +11,7 @@ import {
 } from './charset.ts'
 import { renderBinarizedChar } from './binarized-char.ts'
 import { findReferenceFontSize } from './reference-font-size.ts'
-import { packBits } from './pack-bits.ts'
+import { packBits, popcount } from './pack-bits.ts'
 import { writePatternDb } from './write-pattern-db.ts'
 
 const charsets = {
@@ -117,6 +117,10 @@ const allEntries = [
   ...buildEntries(SIDDHAM, NOTO_SANS_SIDDHAM, notoSansSiddhamFontSize),
 ]
 console.log('Entries:', allEntries.length)
+
+// ランタイム側(src/pattern/match-pattern.ts)がpopcountの二分探索で候補を絞り込める
+// よう、あらかじめpopcount順にソートしておく
+allEntries.sort((a, b) => popcount(a.packed) - popcount(b.packed))
 
 const patternDbPath = new URL(
   '../../src/assets/pattern-db.bin',
