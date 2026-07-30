@@ -16,6 +16,9 @@ dist-ssr
 src/assets/pattern-db.bin
 src/assets/pattern-db-meta.json
 
+# Generated trace
+scripts/capture-trace/trace.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
