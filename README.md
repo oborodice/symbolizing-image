@@ -19,6 +19,6 @@ $ npx tsx scripts/measure-fps-and-heap/index.ts             # JSヒープ/Actual
 $ npx tsx scripts/measure-fps-and-heap/index.ts --headed    # 実際に画面表示するモードで計測
 $ npx tsx scripts/capture-trace/index.ts                    # FPS低下の遷移が起きる区間のCDPトレースを取得(trace.json)
 
-$ uv sync --project scripts/analyze-trace                        # trace.json解析用のPython環境を用意(初回のみ、uvが必要)
-$ uv run --project scripts/analyze-trace scripts/analyze-trace/main.py    # trace.jsonを解析
+$ uv sync --project scripts/analyze-trace    # trace.json解析用のPython環境を用意(初回のみ、uvが必要)
+$ uv run --project scripts/analyze-trace scripts/analyze-trace/main.py scripts/capture-trace/trace.json --start 0 --end 6    # 指定区間(秒)をカテゴリ/プロセス別に集計
 ```
