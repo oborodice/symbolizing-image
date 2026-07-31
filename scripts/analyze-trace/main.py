@@ -101,8 +101,13 @@ def print_process_thread_breakdown(trace_processor: TraceProcessor, window_start
         print(f"{total_ms:10.1f}ms  events={row.event_count:6d}  {row.process_name} / {row.thread_name}")
 
 
-def print_gpu_process_event_breakdown(trace_processor: TraceProcessor, window_start_ns: int, window_end_ns: int) -> None:
-    print("\n--- GPU Process内のイベント名別 ---")
+def print_process_event_breakdown(
+    trace_processor: TraceProcessor,
+    window_start_ns: int,
+    window_end_ns: int,
+    process_name: str,
+) -> None:
+    print(f"\n--- {process_name}内のイベント名別 ---")
     rows = trace_processor.query(f"""
         SELECT
           s.name AS event_name,
@@ -115,7 +120,7 @@ def print_gpu_process_event_breakdown(trace_processor: TraceProcessor, window_st
         LEFT JOIN process_track pt ON s.track_id = pt.id
         LEFT JOIN process p2 ON pt.upid = p2.upid
         WHERE s.ts BETWEEN {window_start_ns} AND {window_end_ns}
-          AND COALESCE(p1.name, p2.name) = 'GPU Process'
+          AND COALESCE(p1.name, p2.name) = '{process_name}'
         GROUP BY event_name
         ORDER BY total_dur_ns DESC
         LIMIT {TOP_N}
@@ -137,7 +142,8 @@ def main() -> None:
     print_category_breakdown(trace_processor, window_start_ns, window_end_ns)
     print_bucketed_summary(trace_processor, window_start_ns, window_end_ns)
     print_process_thread_breakdown(trace_processor, window_start_ns, window_end_ns)
-    print_gpu_process_event_breakdown(trace_processor, window_start_ns, window_end_ns)
+    print_process_event_breakdown(trace_processor, window_start_ns, window_end_ns, "GPU Process")
+    print_process_event_breakdown(trace_processor, window_start_ns, window_end_ns, "Renderer")
 
     trace_processor.close()
 
