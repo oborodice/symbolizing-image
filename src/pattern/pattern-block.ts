@@ -25,7 +25,10 @@ function getAtlasContext(
   const canvas = document.createElement('canvas')
   canvas.width = atlasWidth
   canvas.height = atlasHeight
-  atlasCtx = canvas.getContext('2d')!
+  // willReadFrequentlyがないとGPU-backedなcanvasになり、Chromiumで一定回数
+  // getImageDataを呼んだ後にGPU側の読み戻しが暴走してFPSが1.7fps程度まで
+  // 落ち込んだまま戻らなくなる現象が起きた
+  atlasCtx = canvas.getContext('2d', { willReadFrequently: true })!
   atlasCtx.imageSmoothingQuality = 'high'
   return atlasCtx
 }
