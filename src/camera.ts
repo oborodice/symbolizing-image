@@ -15,4 +15,7 @@ export async function startCamera(
     video: { width, height },
   })
   video.srcObject = activeStream
+  // autoplay属性だけでは再生が始まらない環境(Safari、Playwright操作下のChromium等)が
+  // あるため、明示的にplay()を呼ぶ
+  await video.play()
 }
