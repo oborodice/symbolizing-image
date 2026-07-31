@@ -11,10 +11,46 @@ const DEV_SERVER_PORT = 5183
 const BASE_URL = `http://localhost:${DEV_SERVER_PORT}`
 const DEBUG_URL = `${BASE_URL}/?debug`
 const SAMPLE_INTERVAL_MS = 2000
-const DURATION_MS = 3 * 60 * 1000
+const DEFAULT_DURATION_SEC = 3 * 60
+// resolution-selectの変更はカメラの再起動を伴うため、切り替え後は落ち着くまで待つ
+const RESOLUTION_CHANGE_SETTLE_MS = 1000
 // headless(既定): ヘッドレスで実行。--headedを付けると実際に画面表示するモードで起動する
 // (ヘッドレスvs実描画の違いがフロア到達に影響するかを比較検証するため)
 const HEADLESS = !process.argv.includes('--headed')
+
+function getArgValue(flag: string): string | undefined {
+  const index = process.argv.indexOf(flag)
+  return index === -1 ? undefined : process.argv[index + 1]
+}
+
+// src/debug/screen.tsのRESOLUTION_PRESETSのインデックス(0=640x480, 1=1280x720, 2=1920x1080)
+const RESOLUTION_INDEX = getArgValue('--resolution')
+const TARGET_FPS = getArgValue('--target-fps')
+const GRID_COLS = getArgValue('--grid-cols')
+const DURATION_MS = Number(getArgValue('--duration') ?? DEFAULT_DURATION_SEC) * 1000
+
+async function setRangeInput(page: Page, selector: string, value: string): Promise<void> {
+  await page.locator(selector).evaluate((el, value) => {
+    ;(el as HTMLInputElement).value = value
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  }, value)
+}
+
+async function applyDebugControls(page: Page): Promise<void> {
+  if (RESOLUTION_INDEX !== undefined) {
+    console.log(`resolutionを${RESOLUTION_INDEX}に設定します`)
+    await page.selectOption('#resolution-select', RESOLUTION_INDEX)
+    await sleep(RESOLUTION_CHANGE_SETTLE_MS)
+  }
+  if (GRID_COLS !== undefined) {
+    console.log(`grid-colsを${GRID_COLS}に設定します`)
+    await setRangeInput(page, '#grid-slider', GRID_COLS)
+  }
+  if (TARGET_FPS !== undefined) {
+    console.log(`target-fpsを${TARGET_FPS}に設定します`)
+    await setRangeInput(page, '#fps-slider', TARGET_FPS)
+  }
+}
 
 async function sampleLoop(page: Page, client: CDPSession): Promise<void> {
   const startTime = Date.now()
@@ -44,8 +80,11 @@ async function main(): Promise<void> {
     await client.send('Performance.enable')
 
     await page.goto(DEBUG_URL)
-    console.log('ページを読み込みました。計測を開始します')
+    console.log('ページを読み込みました')
 
+    await applyDebugControls(page)
+
+    console.log('計測を開始します')
     await sampleLoop(page, client)
 
     await browser.close()
