@@ -130,6 +130,25 @@ def print_process_event_breakdown(
         print(f"{total_ms:10.1f}ms  events={row.event_count:6d}  {row.event_name}")
 
 
+def print_user_timing_breakdown(trace_processor: TraceProcessor, window_start_ns: int, window_end_ns: int) -> None:
+    # src/debug/screen.tsのloop()内でperformance.mark/measureにより計測した
+    # 候補関数(drawMirroredCamera/extractPatternBlocks/binarizeBlocks/drawMatchedChars)ごとの内訳
+    print("\n--- User Timing(performance.measure)別 ---")
+    rows = trace_processor.query(f"""
+        SELECT name, COUNT(*) AS event_count, SUM(dur) AS total_dur_ns
+        FROM slice
+        WHERE category = 'blink.user_timing'
+          AND ts BETWEEN {window_start_ns} AND {window_end_ns}
+        GROUP BY name
+        ORDER BY total_dur_ns DESC
+        LIMIT {TOP_N}
+    """)
+    for row in rows:
+        total_ms = (row.total_dur_ns or 0) / 1e6
+        avg_ms = total_ms / row.event_count if row.event_count else 0.0
+        print(f"{total_ms:10.1f}ms  events={row.event_count:6d}  avg={avg_ms:8.3f}ms  {row.name}")
+
+
 def main() -> None:
     args = parse_args()
     trace_processor = TraceProcessor(trace=args.trace_path)
@@ -144,6 +163,7 @@ def main() -> None:
     print_process_thread_breakdown(trace_processor, window_start_ns, window_end_ns)
     print_process_event_breakdown(trace_processor, window_start_ns, window_end_ns, "GPU Process")
     print_process_event_breakdown(trace_processor, window_start_ns, window_end_ns, "Renderer")
+    print_user_timing_breakdown(trace_processor, window_start_ns, window_end_ns)
 
     trace_processor.close()
 

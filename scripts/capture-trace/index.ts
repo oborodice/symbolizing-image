@@ -33,6 +33,7 @@ const TRACE_CATEGORIES = [
   'disabled-by-default-cc.debug',
   'gpu',
   'viz',
+  'blink.user_timing',
 ]
 
 async function captureTrace(
