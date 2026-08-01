@@ -1,12 +1,13 @@
 import { writeFileSync } from 'node:fs'
 import type { CDPSession, Page } from 'playwright'
+import { getArgValue } from '../lib/cli-args.ts'
 import {
   sleep,
   startDevServer,
   waitForServer,
   stopDevServer,
   setupBrowser,
-} from '../playwright-dev-session.ts'
+} from '../lib/playwright-dev-session.ts'
 
 const DEV_SERVER_PORT = 5184
 const BASE_URL = `http://localhost:${DEV_SERVER_PORT}`
@@ -15,6 +16,10 @@ const DEBUG_URL = `${BASE_URL}/?debug`
 // その前後を跨ぐように20秒間トレースを取得する
 const TRACE_DURATION_MS = 20000
 const OUTPUT_PATH = new URL('./trace.json', import.meta.url)
+
+// scripts/generate-fake-camera-video/generate.shで生成した.y4mファイルへの絶対パス。
+// 指定しない場合はChromium組み込みの固定パターン(低エントロピー)のまま計測する
+const VIDEO_FILE = getArgValue('--video-file')
 
 // DevTools Performanceパネルが記録する内容のうち、GC/レイアウト/コンポジット/GPU関連のカテゴリ
 const TRACE_CATEGORIES = [
@@ -67,7 +72,7 @@ async function main(): Promise<void> {
     console.log('開発サーバーの準備ができました')
 
     // ヘッドレスではFPS低下が再現しないことを確認済みのため、常に実描画で起動する
-    const { browser, page, client } = await setupBrowser(false)
+    const { browser, page, client } = await setupBrowser(false, VIDEO_FILE)
 
     const traceEvents = await captureTrace(page, client)
 

@@ -1,11 +1,12 @@
 import type { CDPSession, Page } from 'playwright'
+import { getArgValue } from '../lib/cli-args.ts'
 import {
   sleep,
   startDevServer,
   waitForServer,
   stopDevServer,
   setupBrowser,
-} from '../playwright-dev-session.ts'
+} from '../lib/playwright-dev-session.ts'
 
 const DEV_SERVER_PORT = 5183
 const BASE_URL = `http://localhost:${DEV_SERVER_PORT}`
@@ -17,11 +18,6 @@ const RESOLUTION_CHANGE_SETTLE_MS = 1000
 // headless(既定): ヘッドレスで実行。--headedを付けると実際に画面表示するモードで起動する
 // (ヘッドレスvs実描画の違いがフロア到達に影響するかを比較検証するため)
 const HEADLESS = !process.argv.includes('--headed')
-
-function getArgValue(flag: string): string | undefined {
-  const index = process.argv.indexOf(flag)
-  return index === -1 ? undefined : process.argv[index + 1]
-}
 
 // src/debug/screen.tsのRESOLUTION_PRESETSのインデックス(0=640x480, 1=1280x720, 2=1920x1080)
 const RESOLUTION_INDEX = getArgValue('--resolution')

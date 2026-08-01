@@ -4,7 +4,7 @@ import { chromium, type Browser, type CDPSession, type Page } from 'playwright'
 const SERVER_READY_TIMEOUT_MS = 30000
 const SERVER_POLL_INTERVAL_MS = 300
 
-const projectRoot = new URL('../', import.meta.url)
+const projectRoot = new URL('../../', import.meta.url)
 
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
