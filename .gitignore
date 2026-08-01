@@ -20,6 +20,9 @@ src/assets/pattern-db-meta.json
 # Generated trace
 scripts/capture-trace/trace.json
 
+# Generated fake camera video
+scripts/generate-fake-camera-video/videos/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

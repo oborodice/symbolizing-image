@@ -28,6 +28,9 @@ const RESOLUTION_INDEX = getArgValue('--resolution')
 const TARGET_FPS = getArgValue('--target-fps')
 const GRID_COLS = getArgValue('--grid-cols')
 const DURATION_MS = Number(getArgValue('--duration') ?? DEFAULT_DURATION_SEC) * 1000
+// scripts/generate-fake-camera-video/generate.shで生成した.y4mファイルへの絶対パス。
+// 指定しない場合はChromium組み込みの固定パターン(低エントロピー)のまま計測する
+const VIDEO_FILE = getArgValue('--video-file')
 
 async function setRangeInput(page: Page, selector: string, value: string): Promise<void> {
   await page.locator(selector).evaluate((el, value) => {
@@ -76,7 +79,7 @@ async function main(): Promise<void> {
     await waitForServer(BASE_URL)
     console.log('開発サーバーの準備ができました')
 
-    const { browser, page, client } = await setupBrowser(HEADLESS)
+    const { browser, page, client } = await setupBrowser(HEADLESS, VIDEO_FILE)
     await client.send('Performance.enable')
 
     await page.goto(DEBUG_URL)

@@ -46,15 +46,19 @@ export interface BrowserSession {
   client: CDPSession
 }
 
-export async function setupBrowser(headless: boolean): Promise<BrowserSession> {
+export async function setupBrowser(
+  headless: boolean,
+  fakeVideoCaptureFile?: string,
+): Promise<BrowserSession> {
   console.log(`ブラウザを起動します(headless=${headless})`)
-  const browser = await chromium.launch({
-    headless,
-    args: [
-      '--use-fake-device-for-media-stream',
-      '--use-fake-ui-for-media-stream',
-    ],
-  })
+  const args = [
+    '--use-fake-device-for-media-stream',
+    '--use-fake-ui-for-media-stream',
+  ]
+  if (fakeVideoCaptureFile) {
+    args.push(`--use-file-for-fake-video-capture=${fakeVideoCaptureFile}`)
+  }
+  const browser = await chromium.launch({ headless, args })
   const context = await browser.newContext()
   await context.grantPermissions(['camera'])
   const page = await context.newPage()
