@@ -82,7 +82,7 @@ function getInkMetrics(
 
 // widthxheightの領域をアトラス内に確保し、そこへ描画してよい(page, x, y)を返す。
 // 1文字がページ全体より大きい場合は、パッキング用ページとは無関係の専用ページを割り当てる
-// (パッキング用カーソルの状態には影響させない)
+// (パッキング用カーソルの状態には影響させない。他のグリフと隣接しないため余白も不要)
 function allocateSlot(
   width: number,
   height: number,
@@ -94,19 +94,24 @@ function allocateSlot(
     return { page, x: 0, y: 0 }
   }
 
+  // 隣接するグリフの間に空ける余白。fillTextのアンチエイリアスはインクの実サイズ(measureText
+  // が返す範囲)よりわずかににじむことがあり、隙間無く詰めると、1文字だけをdrawImageで
+  // 切り出した際に隣のグリフのにじみを巻き込んでしまう(文字の周りに線が入って見える不具合の原因)
+  const GLYPH_PADDING = 2
+
   // 呼び出し元のbuildGlyphが必ず先にpackPageを用意しているため、ここではnullにならない
-  if (cursorX + width > ATLAS_SIZE) {
+  if (cursorX + width + GLYPH_PADDING > ATLAS_SIZE) {
     cursorX = 0
     cursorY += cursorRowHeight
     cursorRowHeight = 0
   }
-  if (cursorY + height > ATLAS_SIZE) {
+  if (cursorY + height + GLYPH_PADDING > ATLAS_SIZE) {
     startNewPackPage()
   }
 
   const slot = { page: packPage!, x: cursorX, y: cursorY }
-  cursorX += width
-  cursorRowHeight = Math.max(cursorRowHeight, height)
+  cursorX += width + GLYPH_PADDING
+  cursorRowHeight = Math.max(cursorRowHeight, height + GLYPH_PADDING)
   return slot
 }
 
