@@ -1,5 +1,6 @@
 import { PATTERN_WORDS, type PatternDb } from './pattern-db'
 import { popcount32 } from './popcount'
+import { computeSignature } from './lsh'
 
 function computeQueryPopcount(packed: Uint32Array): number {
   let total = 0
@@ -49,7 +50,7 @@ function hammingDistance(
   return distance
 }
 
-export function findNearestChar(
+function findNearestChar(
   packed: Uint32Array,
   patternDb: PatternDb,
 ): string {
@@ -113,6 +114,73 @@ export function findNearestChar(
         break
       }
     }
+  }
+
+  return chars[bestIndex]
+}
+
+// 候補の重複排除(seen)と集合(candidates)は、ブロックごとに新規生成せず使い回す
+// (最大1200〜2700回/フレーム呼ばれるホットパスでのアロケーションを避けるため)
+let seenBuffer: Uint8Array | null = null
+let candidateBuffer: Uint32Array | null = null
+
+function getLshBuffers(entryCount: number): {
+  seen: Uint8Array
+  candidates: Uint32Array
+} {
+  if (!seenBuffer || seenBuffer.length !== entryCount) {
+    seenBuffer = new Uint8Array(entryCount)
+    candidateBuffer = new Uint32Array(entryCount)
+  }
+  return { seen: seenBuffer, candidates: candidateBuffer! }
+}
+
+// LSHで絞り込んだ候補だけを本格比較する近似版。候補が1件も見つからなかった場合
+// (全表ミス)は、常に正しい結果を返すfindNearestCharにフォールバックする
+export function findNearestCharLSH(
+  packed: Uint32Array,
+  patternDb: PatternDb,
+): string {
+  const { chars, patterns, entryCount, lsh } = patternDb
+  const { seen, candidates } = getLshBuffers(entryCount)
+  let candidateCount = 0
+
+  for (let t = 0; t < lsh.positions.length; t++) {
+    const signature = computeSignature(packed, lsh.positions[t])
+    const offsets = lsh.offsets[t]
+    const indices = lsh.indices[t]
+    const start = offsets[signature]
+    const end = offsets[signature + 1]
+    for (let i = start; i < end; i++) {
+      const index = indices[i]
+      if (!seen[index]) {
+        seen[index] = 1
+        candidates[candidateCount++] = index
+      }
+    }
+  }
+
+  if (candidateCount === 0) {
+    return findNearestChar(packed, patternDb)
+  }
+
+  let bestIndex = candidates[0]
+  let bestDistance = Infinity
+  for (let i = 0; i < candidateCount; i++) {
+    const index = candidates[i]
+    const distance = hammingDistance(
+      packed,
+      patterns,
+      index * PATTERN_WORDS,
+      bestDistance,
+    )
+    if (distance < bestDistance) {
+      bestDistance = distance
+      bestIndex = index
+    }
+    // 次回呼び出しのためにmarkを戻す(候補集合の外まで毎回全消去すると
+    // entryCount分のコストがかかるため、実際に立てたビットだけ戻す)
+    seen[index] = 0
   }
 
   return chars[bestIndex]

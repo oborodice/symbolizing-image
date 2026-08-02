@@ -1,6 +1,7 @@
 import patternDbUrl from '../assets/pattern-db.bin?url'
 import { PATTERN_SIZE } from '../config'
 import { popcount32 } from './popcount'
+import { buildLshTables, type PatternDbLsh } from './lsh'
 
 // レコードのバイトレイアウト。書き込み側(scripts/generate-pattern-db/write-pattern-db.ts)と一致させること
 // (全てリトルエンディアン):
@@ -21,6 +22,7 @@ export interface PatternDb {
   // 単調増加になる(match-pattern.tsの二分探索が前提とする不変条件)
   popcounts: Uint32Array
   entryCount: number
+  lsh: PatternDbLsh
 }
 
 function readRecord(
@@ -54,7 +56,11 @@ function computePopcounts(
   return popcounts
 }
 
-function parsePatternDb(buffer: ArrayBuffer): PatternDb {
+function parsePatternDb(buffer: ArrayBuffer): {
+  chars: string[]
+  patterns: Uint32Array
+  entryCount: number
+} {
   const entryCount = buffer.byteLength / PATTERN_RECORD_BYTES
   const chars = new Array<string>(entryCount)
   const patterns = new Uint32Array(entryCount * PATTERN_WORDS)
@@ -69,14 +75,24 @@ function parsePatternDb(buffer: ArrayBuffer): PatternDb {
     patterns.set(pattern, entryIndex * PATTERN_WORDS)
   }
 
-  const popcounts = computePopcounts(patterns, entryCount)
-
-  return { chars, patterns, popcounts, entryCount }
+  return { chars, patterns, entryCount }
 }
 
 export async function loadPatternDb(): Promise<PatternDb> {
   const buffer = await fetch(patternDbUrl).then((response) =>
     response.arrayBuffer(),
   )
-  return parsePatternDb(buffer)
+  const { chars, patterns, entryCount } = parsePatternDb(buffer)
+
+  const popcounts = computePopcounts(patterns, entryCount)
+  // popcountsとは異なり、LSHの表はバイナリファイルに保存せず読み込みのたびにその場で
+  // 構築する(patternsさえあれば計算でき、Node専用ライブラリへの依存もないため)
+  const lsh = buildLshTables({
+    patterns,
+    entryCount,
+    patternWords: PATTERN_WORDS,
+    totalBits: PATTERN_SIZE * PATTERN_SIZE,
+  })
+
+  return { chars, patterns, popcounts, entryCount, lsh }
 }
