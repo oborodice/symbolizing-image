@@ -12,7 +12,6 @@ const BYTES_PER_WORD = BITS_PER_WORD / 8
 export const PATTERN_WORDS = Math.ceil(
   (PATTERN_SIZE * PATTERN_SIZE) / BITS_PER_WORD,
 )
-const PATTERN_RECORD_BYTES = BYTES_PER_WORD + PATTERN_WORDS * BYTES_PER_WORD
 
 export interface PatternDb {
   chars: string[]
@@ -61,7 +60,8 @@ function parsePatternDb(buffer: ArrayBuffer): {
   patterns: Uint32Array
   entryCount: number
 } {
-  const entryCount = buffer.byteLength / PATTERN_RECORD_BYTES
+  const patternRecordBytes = BYTES_PER_WORD + PATTERN_WORDS * BYTES_PER_WORD
+  const entryCount = buffer.byteLength / patternRecordBytes
   const chars = new Array<string>(entryCount)
   const patterns = new Uint32Array(entryCount * PATTERN_WORDS)
 
@@ -69,7 +69,7 @@ function parsePatternDb(buffer: ArrayBuffer): {
   for (let entryIndex = 0; entryIndex < entryCount; entryIndex++) {
     const { char, pattern } = readRecord(
       view,
-      entryIndex * PATTERN_RECORD_BYTES,
+      entryIndex * patternRecordBytes,
     )
     chars[entryIndex] = char
     patterns.set(pattern, entryIndex * PATTERN_WORDS)

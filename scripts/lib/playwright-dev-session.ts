@@ -1,16 +1,12 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import { chromium, type Browser, type CDPSession, type Page } from 'playwright'
 
-const SERVER_READY_TIMEOUT_MS = 30000
-const SERVER_POLL_INTERVAL_MS = 300
-
-const projectRoot = new URL('../../', import.meta.url)
-
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export function startDevServer(port: number): ChildProcess {
+  const projectRoot = new URL('../../', import.meta.url)
   return spawn('npx', ['vite', '--port', String(port), '--strictPort'], {
     cwd: projectRoot,
     detached: true,
@@ -19,7 +15,9 @@ export function startDevServer(port: number): ChildProcess {
 }
 
 export async function waitForServer(url: string): Promise<void> {
-  const deadline = Date.now() + SERVER_READY_TIMEOUT_MS
+  const serverReadyTimeoutMs = 30000
+  const serverPollIntervalMs = 300
+  const deadline = Date.now() + serverReadyTimeoutMs
   while (Date.now() < deadline) {
     try {
       const response = await fetch(url)
@@ -27,7 +25,7 @@ export async function waitForServer(url: string): Promise<void> {
     } catch {
       // まだ起動していない。再試行する
     }
-    await sleep(SERVER_POLL_INTERVAL_MS)
+    await sleep(serverPollIntervalMs)
   }
   throw new Error('Dev server did not become ready in time')
 }
