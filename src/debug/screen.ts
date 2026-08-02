@@ -263,6 +263,8 @@ export function renderDebugScreen(root: HTMLElement): void {
     if (showChars && patternDb) {
       blocks = extractPatternBlocks(
         canvas,
+        camWidth,
+        camHeight,
         getBlockRects(),
         PATTERN_SIZE,
         gridCols,

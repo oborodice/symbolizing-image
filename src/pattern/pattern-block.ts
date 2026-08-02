@@ -35,28 +35,32 @@ function getAtlasContext(
 
 // crop(切り出し範囲の指定)とresizeはブラウザのcanvas合成パイプラインに任せる
 // (drawImage)が、読み出し(getImageData)は全ブロック分をまとめて1回だけ行う
+//
+// computeBlockRects(../blocks.ts)が作る各ブロックの矩形は、隙間なく敷き詰められて
+// カメラ映像全体を覆っているため、ブロックごとに個別に切り出して縮小する代わりに、
+// カメラ映像全体を一括で(atlasWidth, atlasHeight)へ縮小する1回のdrawImage呼び出しで
+// 置き換えられる。各ブロックの境界はMath.floorの丸めで最大1pxの誤差があるため、
+// 個々のブロックの拡大率は一括縮小の場合と完全には一致しないが、誤差は無視できる範囲
 function buildAtlas(
   source: CanvasImageSource,
-  rects: BlockRect[],
+  camWidth: number,
+  camHeight: number,
   atlasWidth: number,
   atlasHeight: number,
-  size: number,
 ): ImageData {
   const ctx = getAtlasContext(atlasWidth, atlasHeight)
 
-  rects.forEach((rect) => {
-    ctx.drawImage(
-      source,
-      rect.x,
-      rect.y,
-      rect.width,
-      rect.height,
-      rect.col * size,
-      rect.row * size,
-      size,
-      size,
-    )
-  })
+  ctx.drawImage(
+    source,
+    0,
+    0,
+    camWidth,
+    camHeight,
+    0,
+    0,
+    atlasWidth,
+    atlasHeight,
+  )
 
   return ctx.getImageData(0, 0, atlasWidth, atlasHeight)
 }
@@ -115,12 +119,14 @@ function syncBlock(
 
 export function extractPatternBlocks(
   source: CanvasImageSource,
+  camWidth: number,
+  camHeight: number,
   rects: BlockRect[],
   size: number,
   cols: number,
   rows: number,
 ): PatternBlock[] {
-  const atlas = buildAtlas(source, rects, cols * size, rows * size, size)
+  const atlas = buildAtlas(source, camWidth, camHeight, cols * size, rows * size)
 
   // blocksとrectsは同じ要素数・同じ並び順であることが前提(getReusableBlocksの
   // キャッシュ条件がrects.lengthとsizeの一致を保証しているため成り立つ)
