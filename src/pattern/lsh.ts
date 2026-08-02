@@ -57,8 +57,10 @@ export function computeSignature(
   positions: Uint16Array,
 ): number {
   let signature = 0
-  for (const position of positions) {
-    signature = (signature << 1) | extractBit(packed, position)
+  // 他のホットループ(pack-bits.ts等)と同様、イテレータプロトコルのオーバーヘッドを
+  // 避けるため添字ループにしている(ブロックごとにL回×このループ、という頻度で呼ばれるため)
+  for (let i = 0; i < positions.length; i++) {
+    signature = (signature << 1) | extractBit(packed, positions[i])
   }
   return signature
 }
