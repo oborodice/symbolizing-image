@@ -2,7 +2,7 @@ import type { Page } from 'playwright'
 import { getArgValue } from './cli-args.ts'
 import { sleep } from './playwright-dev-session.ts'
 
-async function setRangeInput(page: Page, selector: string, value: string): Promise<void> {
+export async function setRangeInput(page: Page, selector: string, value: string): Promise<void> {
   await page.locator(selector).evaluate((el, value) => {
     ;(el as HTMLInputElement).value = value
     el.dispatchEvent(new Event('input', { bubbles: true }))

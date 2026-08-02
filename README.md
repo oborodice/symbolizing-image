@@ -27,4 +27,7 @@ $ npx tsx scripts/capture-trace/index.ts --video-file scripts/generate-fake-came
 
 $ uv sync --project scripts/analyze-trace    # trace.json解析用のPython環境を用意(初回のみ、uvが必要)
 $ uv run --project scripts/analyze-trace scripts/analyze-trace/main.py scripts/capture-trace/trace.json --start 0 --end 6    # 指定区間(秒)をカテゴリ/プロセス別に集計
+
+$ npx tsx scripts/measure-glyph-cache-growth/index.ts --resolution 2 --video-file scripts/generate-fake-camera-video/videos/noise_1920x1080_30fps.y4m    # グリッド列数を全範囲(既定10〜100)踏破させ、グリフキャッシュのヒープ増加量を計測
+$ npx tsx scripts/measure-glyph-cache-growth/index.ts --resolution 2 --grid-start 20 --grid-end 60 --grid-step 5    # 範囲・刻み幅を変えて計測
 ```
