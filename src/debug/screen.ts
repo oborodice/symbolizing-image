@@ -35,7 +35,7 @@ const RESOLUTION_PRESETS: Resolution[] = [
 const DEFAULT_RESOLUTION = RESOLUTION_PRESETS[0]
 
 const MIN_FPS = 1
-const MAX_FPS = 30
+const MAX_FPS = 60
 const DEFAULT_FPS = 15
 
 const MIN_GRID_COLS = 10
