@@ -8,6 +8,7 @@ import {
   stopDevServer,
   setupBrowser,
 } from '../lib/playwright-dev-session.ts'
+import { applyDebugControls } from '../lib/debug-controls.ts'
 
 const DEV_SERVER_PORT = 5184
 const BASE_URL = `http://localhost:${DEV_SERVER_PORT}`
@@ -48,6 +49,8 @@ async function captureTrace(
   })
 
   await page.goto(debugUrl)
+  // 解像度変更はカメラ再起動を伴うため、トレース開始直後に設定を確定させてから計測窓に入る
+  await applyDebugControls(page)
   console.log(
     `ページを読み込みました。${traceDurationMs / 1000}秒間トレースを取得します`,
   )
