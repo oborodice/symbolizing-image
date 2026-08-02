@@ -16,7 +16,10 @@ export function drawMatchedChars(
   packedBlock: Uint32Array,
   color: string,
 ): void {
-  blocks.forEach((block) => {
+  // .forEachのコールバック呼び出しオーバーヘッドを避けるため添字ループにしている
+  // (最大5,600回/フレーム呼ばれるホットループのため)
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i]
     packBits(block.imageData, packedBlock)
     const char = findNearestCharLSH(packedBlock, patternDb)
     const { fontFamily, referenceFontSize } = fontForChar(char, patternDbMeta)
@@ -36,5 +39,5 @@ export function drawMatchedChars(
       block.width,
       block.height,
     )
-  })
+  }
 }

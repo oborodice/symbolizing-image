@@ -131,10 +131,18 @@ export function extractPatternBlocks(
   // blocksとrectsは同じ要素数・同じ並び順であることが前提(getReusableBlocksの
   // キャッシュ条件がrects.lengthとsizeの一致を保証しているため成り立つ)
   const blocks = getReusableBlocks(rects, size)
-  blocks.forEach((block, i) => syncBlock(block, rects[i], atlas, size))
+  // .forEachのコールバック呼び出しオーバーヘッドを避けるため添字ループにしている
+  // (最大5,600回/フレーム呼ばれるホットループのため)
+  for (let i = 0; i < blocks.length; i++) {
+    syncBlock(blocks[i], rects[i], atlas, size)
+  }
   return blocks
 }
 
 export function binarizeBlocks(blocks: PatternBlock[], threshold: number): void {
-  blocks.forEach((block) => binarize(block.imageData, threshold))
+  // .forEachのコールバック呼び出しオーバーヘッドを避けるため添字ループにしている
+  // (最大5,600回/フレーム呼ばれるホットループのため)
+  for (let i = 0; i < blocks.length; i++) {
+    binarize(blocks[i].imageData, threshold)
+  }
 }
