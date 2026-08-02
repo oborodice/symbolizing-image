@@ -30,4 +30,9 @@ export async function applyDebugControls(page: Page): Promise<void> {
     console.log(`target-fpsを${targetFps}に設定します`)
     await setRangeInput(page, '#fps-slider', targetFps)
   }
+  // 既定でON(#show-chars-toggle)のため、指定時はクリックしてOFFにする
+  if (process.argv.includes('--hide-chars')) {
+    console.log('show-charsをOFFにします')
+    await page.click('#show-chars-toggle')
+  }
 }
