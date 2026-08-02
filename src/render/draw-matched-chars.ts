@@ -16,7 +16,6 @@ export function drawMatchedChars(
   packedBlock: Uint32Array,
   color: string,
 ): void {
-  ctx.fillStyle = color
   blocks.forEach((block) => {
     packBits(block.imageData, packedBlock)
     const char = findNearestCharLSH(packedBlock, patternDb)
@@ -31,6 +30,7 @@ export function drawMatchedChars(
       char,
       fontSize,
       fontFamily,
+      color,
       block.x,
       block.y,
       block.width,
