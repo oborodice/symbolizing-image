@@ -196,7 +196,7 @@ export function renderControlPanel(
     callbacks.onGridColsChange,
   )
 
-  resetButton.addEventListener('click', () => {
+  function applyDefaults(): void {
     selectResolution(RESOLUTION_PRESETS.indexOf(DEFAULT_RESOLUTION))
     setFps(DEFAULT_FPS)
     setGridCols(DEFAULT_GRID_COLS)
@@ -204,17 +204,13 @@ export function renderControlPanel(
     setShowCamera(DEFAULT_SHOW_CAMERA)
     setShowChars(DEFAULT_SHOW_CHARS)
     setShowGrid(DEFAULT_SHOW_GRID)
-  })
+  }
+
+  resetButton.addEventListener('click', applyDefaults)
 
   // 初期値をcallbacks経由でscreen側にも伝える(bindRange/bindCheckboxのapplyが
   // onChangeを呼ぶため、この呼び出しだけで両側の状態が揃う)
-  selectResolution(RESOLUTION_PRESETS.indexOf(DEFAULT_RESOLUTION))
-  setFps(DEFAULT_FPS)
-  setGridCols(DEFAULT_GRID_COLS)
-  setBinarizeThreshold(DEFAULT_BINARIZE_THRESHOLD)
-  setShowCamera(DEFAULT_SHOW_CAMERA)
-  setShowChars(DEFAULT_SHOW_CHARS)
-  setShowGrid(DEFAULT_SHOW_GRID)
+  applyDefaults()
 
   return {
     setActualFps(text: string): void {
