@@ -39,7 +39,6 @@ async function main(): Promise<void> {
   // scripts/generate-fake-camera-video/generate.shで生成した.y4mファイルへの絶対パス。
   // 指定しない場合はChromium組み込みの固定パターン(低エントロピー)のまま計測する
   const videoFile = getArgValue('--video-file')
-  const debugUrl = `${BASE_URL}/?debug`
 
   console.log('開発サーバーを起動しています...')
   const devServer = startDevServer(DEV_SERVER_PORT)
@@ -51,7 +50,7 @@ async function main(): Promise<void> {
     const { browser, page, client } = await setupBrowser(headless, videoFile)
     await client.send('Performance.enable')
 
-    await page.goto(debugUrl)
+    await page.goto(BASE_URL)
     console.log('ページを読み込みました')
 
     await applyDebugControls(page)

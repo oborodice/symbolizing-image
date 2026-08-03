@@ -167,7 +167,7 @@ async function main(): Promise<void> {
       console.log('Chromeのプロセスが見つからなかったため、RSSは計測しません')
     }
 
-    await page.goto(`${BASE_URL}/?debug`)
+    await page.goto(BASE_URL)
     await sleep(1500)
 
     // --resolutionを指定(展示で使う予定の1920x1080なら--resolution 2)

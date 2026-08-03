@@ -17,7 +17,6 @@ async function captureTrace(
   page: Page,
   client: CDPSession,
 ): Promise<Record<string, unknown>[]> {
-  const debugUrl = `${BASE_URL}/?debug`
   // これまでの計測でFPS低下の遷移が起きるのはページ読み込み後8〜11秒あたりだったため、
   // その前後を跨ぐように20秒間トレースを取得する
   const traceDurationMs = 20000
@@ -48,7 +47,7 @@ async function captureTrace(
     traceConfig: { includedCategories: traceCategories },
   })
 
-  await page.goto(debugUrl)
+  await page.goto(BASE_URL)
   // 解像度変更はカメラ再起動を伴うため、トレース開始直後に設定を確定させてから計測窓に入る
   await applyDebugControls(page)
   console.log(

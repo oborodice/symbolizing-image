@@ -11,8 +11,7 @@ $ npm install
 $ node scripts/fetch-jis-x0213-kanji/index.ts     # 対象漢字のコードポイント一覧を取得
 $ node scripts/generate-pattern-db/index.ts       # 文字パターンDBを生成
 $ npm run dev
-$ open http://localhost:5173          # exhibition mode
-$ open http://localhost:5173/?debug   # debug mode
+$ open http://localhost:5173
 
 $ scripts/generate-fake-camera-video/generate.sh                 # 疑似カメラ用ノイズ動画を生成(既定: 640x480/30fps/15秒、ffmpegが必要)
 $ scripts/generate-fake-camera-video/generate-all.sh              # 3解像度分まとめて生成
