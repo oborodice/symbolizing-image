@@ -131,16 +131,7 @@ export function renderScreen(root: HTMLElement): void {
     actualFpsWindowStart = timestamp
   }
 
-  function loop(timestamp: number) {
-    requestAnimationFrame(loop)
-
-    const interval = 1000 / fps
-    if (timestamp - lastDrawTime < interval) {
-      return
-    }
-    lastDrawTime = timestamp
-    recordActualFrame(timestamp)
-
+  function drawFrame(): void {
     drawMirroredCamera(ctx, video, camWidth, camHeight)
 
     const patternDb = patternDbRef
@@ -178,6 +169,19 @@ export function renderScreen(root: HTMLElement): void {
     if (showGrid) {
       drawGrid(ctx, camWidth, camHeight, gridCols, gridRows)
     }
+  }
+
+  function loop(timestamp: number) {
+    requestAnimationFrame(loop)
+
+    const interval = 1000 / fps
+    if (timestamp - lastDrawTime < interval) {
+      return
+    }
+    lastDrawTime = timestamp
+    recordActualFrame(timestamp)
+
+    drawFrame()
   }
   requestAnimationFrame(loop)
 }
