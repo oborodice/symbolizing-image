@@ -3,46 +3,6 @@
   overflow-y: auto;
 }
 
-#preview {
+#output {
   max-width: 100%;
-}
-
-.controls {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-start;
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  max-height: 40vh;
-  overflow-y: auto;
-  background: rgba(255, 204, 0, 0.85);
-  padding: 8px;
-}
-
-.controls[hidden] {
-  display: none;
-}
-
-#fps-value {
-  display: inline-block;
-  width: 2ch;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-#threshold-value {
-  display: inline-block;
-  width: 3ch;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-#grid-value {
-  display: inline-block;
-  width: 24ch;
-  font-family: ui-monospace, monospace;
-  font-variant-numeric: tabular-nums;
 }

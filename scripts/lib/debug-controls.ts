@@ -12,7 +12,7 @@ export async function setRangeInput(page: Page, selector: string, value: string)
 export async function applyDebugControls(page: Page): Promise<void> {
   // resolution-selectの変更はカメラの再起動を伴うため、切り替え後は落ち着くまで待つ
   const resolutionChangeSettleMs = 1000
-  // src/screen/index.tsのRESOLUTION_PRESETSのインデックス(0=640x480, 1=1280x720, 2=1920x1080)
+  // src/control-panel/index.tsのRESOLUTION_PRESETSのインデックス(0=640x480, 1=1280x720, 2=1920x1080)
   const resolutionIndex = getArgValue('--resolution')
   const targetFps = getArgValue('--target-fps')
   const gridCols = getArgValue('--grid-cols')

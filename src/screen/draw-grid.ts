@@ -1,14 +1,3 @@
-export function formatGridLabel(
-  camWidth: number,
-  camHeight: number,
-  cols: number,
-  rows: number,
-): string {
-  const blockWidth = camWidth / cols
-  const blockHeight = camHeight / rows
-  return `${cols} x ${rows} (${blockWidth.toFixed(1)} x ${blockHeight.toFixed(1)}px)`
-}
-
 export function drawGrid(
   ctx: CanvasRenderingContext2D,
   camWidth: number,

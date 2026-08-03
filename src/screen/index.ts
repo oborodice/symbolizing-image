@@ -1,14 +1,13 @@
 import './screen.css'
 import { startCamera } from '../camera'
 import { deriveGridRows } from '../grid'
-import { drawGrid, formatGridLabel } from './grid'
+import { drawGrid } from './draw-grid'
 import { computeBlockRects, type BlockRect } from '../blocks'
 import {
   extractPatternBlocks,
   binarizeBlocks,
   type PatternBlock,
 } from '../pattern/pattern-block'
-import { bindRange, bindCheckbox } from '../controls'
 import {
   PATTERN_WORDS,
   loadPatternDb,
@@ -21,110 +20,22 @@ import { drawMirroredCamera } from '../render/draw-mirrored-camera'
 import { fillCanvas } from '../render/fill-canvas'
 import { clearGlyphCache } from '../render/glyph-cache'
 import { PATTERN_SIZE } from '../config'
-
-interface Resolution {
-  width: number
-  height: number
-  label: string
-}
-
-const RESOLUTION_PRESETS: Resolution[] = [
-  { width: 640, height: 480, label: '640x480 (4:3)' },
-  { width: 1280, height: 720, label: '1280x720 (16:9)' },
-  { width: 1920, height: 1080, label: '1920x1080 (16:9)' },
-]
-const DEFAULT_RESOLUTION = RESOLUTION_PRESETS[0]
-
-const MIN_FPS = 1
-const MAX_FPS = 60
-const DEFAULT_FPS = 15
-
-const MIN_GRID_COLS = 10
-const MAX_GRID_COLS = 100
-const DEFAULT_GRID_COLS = 40
-
-const MIN_BINARIZE_THRESHOLD = 0
-const MAX_BINARIZE_THRESHOLD = 255
-const DEFAULT_BINARIZE_THRESHOLD = 128
-
-const DEFAULT_SHOW_GRID = false
-const DEFAULT_SHOW_CAMERA = true
-const DEFAULT_SHOW_CHARS = true
+import { renderControlPanel } from '../control-panel'
 
 export function renderScreen(root: HTMLElement): void {
   root.classList.add('screen')
   root.innerHTML = `
     <video id="camera" autoplay playsinline muted hidden></video>
-    <canvas id="preview"></canvas>
-    <div class="controls" hidden>
-      <label>
-        Resolution:
-        <select id="resolution-select">
-          ${RESOLUTION_PRESETS.map((r, i) => `<option value="${i}">${r.label}</option>`).join('')}
-        </select>
-      </label>
-      <label>
-        FPS: <span id="fps-value">${DEFAULT_FPS}</span>
-        <input id="fps-slider" type="range" min="${MIN_FPS}" max="${MAX_FPS}" value="${DEFAULT_FPS}" />
-      </label>
-      <div>Actual FPS: <span id="actual-fps-value">-</span></div>
-      <label>
-        Binarize threshold: <span id="binarize-threshold-value">${DEFAULT_BINARIZE_THRESHOLD}</span>
-        <input id="binarize-threshold-slider" type="range" min="${MIN_BINARIZE_THRESHOLD}" max="${MAX_BINARIZE_THRESHOLD}" value="${DEFAULT_BINARIZE_THRESHOLD}" />
-      </label>
-      <label>
-        <input id="show-camera-toggle" type="checkbox" ${DEFAULT_SHOW_CAMERA ? 'checked' : ''} />
-        Show camera
-      </label>
-      <label>
-        <input id="show-chars-toggle" type="checkbox" ${DEFAULT_SHOW_CHARS ? 'checked' : ''} />
-        Show characters
-      </label>
-      <label>
-        <input id="grid-toggle" type="checkbox" ${DEFAULT_SHOW_GRID ? 'checked' : ''} />
-        Show grid
-      </label>
-      <label>
-        Grid: <span id="grid-value">${formatGridLabel(DEFAULT_RESOLUTION.width, DEFAULT_RESOLUTION.height, DEFAULT_GRID_COLS, deriveGridRows(DEFAULT_GRID_COLS, DEFAULT_RESOLUTION.width, DEFAULT_RESOLUTION.height))}</span>
-        <input id="grid-slider" type="range" min="${MIN_GRID_COLS}" max="${MAX_GRID_COLS}" value="${DEFAULT_GRID_COLS}" />
-      </label>
-      <button id="reset-button" type="button">Reset parameters</button>
-    </div>
+    <canvas id="output"></canvas>
+    <div id="control-panel-root"></div>
   `
 
   const video = root.querySelector<HTMLVideoElement>('#camera')!
-  const canvas = root.querySelector<HTMLCanvasElement>('#preview')!
+  const canvas = root.querySelector<HTMLCanvasElement>('#output')!
   const ctx = canvas.getContext('2d')!
-  const resolutionSelect =
-    root.querySelector<HTMLSelectElement>('#resolution-select')!
-  const fpsSlider = root.querySelector<HTMLInputElement>('#fps-slider')!
-  const fpsValue = root.querySelector<HTMLSpanElement>('#fps-value')!
-  const actualFpsValue = root.querySelector<HTMLSpanElement>(
-    '#actual-fps-value',
+  const controlPanelRoot = root.querySelector<HTMLDivElement>(
+    '#control-panel-root',
   )!
-  const binarizeThresholdSlider = root.querySelector<HTMLInputElement>(
-    '#binarize-threshold-slider',
-  )!
-  const binarizeThresholdValue = root.querySelector<HTMLSpanElement>(
-    '#binarize-threshold-value',
-  )!
-  const showCameraToggle = root.querySelector<HTMLInputElement>(
-    '#show-camera-toggle',
-  )!
-  const showCharsToggle = root.querySelector<HTMLInputElement>(
-    '#show-chars-toggle',
-  )!
-  const gridToggle = root.querySelector<HTMLInputElement>('#grid-toggle')!
-  const gridSlider = root.querySelector<HTMLInputElement>('#grid-slider')!
-  const gridValue = root.querySelector<HTMLSpanElement>('#grid-value')!
-  const resetButton = root.querySelector<HTMLButtonElement>('#reset-button')!
-  const controls = root.querySelector<HTMLDivElement>('.controls')!
-
-  window.addEventListener('keydown', (event) => {
-    if (event.key.toLowerCase() === 'c') {
-      controls.hidden = !controls.hidden
-    }
-  })
 
   const packedBlock = new Uint32Array(PATTERN_WORDS)
   let patternDbRef: PatternDb | null = null
@@ -137,8 +48,8 @@ export function renderScreen(root: HTMLElement): void {
     fontsReady = true
   })
 
-  let camWidth = DEFAULT_RESOLUTION.width
-  let camHeight = DEFAULT_RESOLUTION.height
+  let camWidth = 0
+  let camHeight = 0
   function applyResolution(width: number, height: number): void {
     camWidth = width
     camHeight = height
@@ -149,58 +60,19 @@ export function renderScreen(root: HTMLElement): void {
     // 解像度が変わるとブロックの高さ(→フォントサイズ)も変わり、それまでの
     // グリフキャッシュが死蔵データになるため空にする
     clearGlyphCache()
+    void startCamera(video, camWidth, camHeight)
   }
 
-  let fps = DEFAULT_FPS
-  const setFps = bindRange(fpsSlider, fpsValue, String, (value) => {
-    fps = value
-  })
-
-  let binarizeThreshold = DEFAULT_BINARIZE_THRESHOLD
-  const setBinarizeThreshold = bindRange(
-    binarizeThresholdSlider,
-    binarizeThresholdValue,
-    String,
-    (value) => {
-      binarizeThreshold = value
-    },
-  )
-
-  let showCamera = DEFAULT_SHOW_CAMERA
-  const setShowCamera = bindCheckbox(showCameraToggle, (value) => {
-    showCamera = value
-  })
-
-  let showChars = DEFAULT_SHOW_CHARS
-  const setShowChars = bindCheckbox(showCharsToggle, (value) => {
-    showChars = value
-  })
-
-  let showGrid = DEFAULT_SHOW_GRID
-  const setShowGrid = bindCheckbox(gridToggle, (value) => {
-    showGrid = value
-  })
-
-  let gridCols = DEFAULT_GRID_COLS
-  let gridRows = deriveGridRows(gridCols, camWidth, camHeight)
-  const setGridCols = bindRange(
-    gridSlider,
-    gridValue,
-    (cols) =>
-      formatGridLabel(
-        camWidth,
-        camHeight,
-        cols,
-        deriveGridRows(cols, camWidth, camHeight),
-      ),
-    (value) => {
-      gridCols = value
-      gridRows = deriveGridRows(value, camWidth, camHeight)
-      // グリッド数が変わるとブロックの高さ(→フォントサイズ)も変わり、それまでの
-      // グリフキャッシュが死蔵データになるため空にする
-      clearGlyphCache()
-    },
-  )
+  // 以下の状態(fps・binarizeThreshold・show*・gridCols/gridRows)は、いずれも
+  // 下のrenderControlPanelのcallbacksを通じてのみ更新される。パネル側が起動時に
+  // 一度デフォルト値でcallbacksを呼ぶため、ここでの初期値はプレースホルダーでよい
+  let fps = 0
+  let binarizeThreshold = 0
+  let showCamera = false
+  let showChars = false
+  let showGrid = false
+  let gridCols = 0
+  let gridRows = 0
 
   // camWidth/camHeight/gridCols/gridRowsが変わらない限り、ブロックの矩形は
   // 毎フレーム同じ結果になるので、値が変わった時だけ再計算する
@@ -215,29 +87,33 @@ export function renderScreen(root: HTMLElement): void {
     return cachedRects
   }
 
-  resolutionSelect.addEventListener('change', async () => {
-    const preset = RESOLUTION_PRESETS[Number(resolutionSelect.value)]
-    applyResolution(preset.width, preset.height)
-    setGridCols(gridCols)
-    await startCamera(video, camWidth, camHeight)
+  const panel = renderControlPanel(controlPanelRoot, {
+    onResolutionChange: (width, height) => {
+      applyResolution(width, height)
+    },
+    onFpsChange: (value) => {
+      fps = value
+    },
+    onBinarizeThresholdChange: (value) => {
+      binarizeThreshold = value
+    },
+    onShowCameraChange: (value) => {
+      showCamera = value
+    },
+    onShowCharsChange: (value) => {
+      showChars = value
+    },
+    onShowGridChange: (value) => {
+      showGrid = value
+    },
+    onGridColsChange: (cols) => {
+      gridCols = cols
+      gridRows = deriveGridRows(cols, camWidth, camHeight)
+      // グリッド数が変わるとブロックの高さ(→フォントサイズ)も変わり、それまでの
+      // グリフキャッシュが死蔵データになるため空にする
+      clearGlyphCache()
+    },
   })
-
-  resetButton.addEventListener('click', async () => {
-    resolutionSelect.value = String(
-      RESOLUTION_PRESETS.indexOf(DEFAULT_RESOLUTION),
-    )
-    applyResolution(DEFAULT_RESOLUTION.width, DEFAULT_RESOLUTION.height)
-    setFps(DEFAULT_FPS)
-    setGridCols(DEFAULT_GRID_COLS)
-    setBinarizeThreshold(DEFAULT_BINARIZE_THRESHOLD)
-    setShowCamera(DEFAULT_SHOW_CAMERA)
-    setShowChars(DEFAULT_SHOW_CHARS)
-    setShowGrid(DEFAULT_SHOW_GRID)
-    await startCamera(video, camWidth, camHeight)
-  })
-
-  applyResolution(camWidth, camHeight)
-  startCamera(video, camWidth, camHeight)
 
   let lastDrawTime = 0
 
@@ -250,10 +126,7 @@ export function renderScreen(root: HTMLElement): void {
     if (elapsed < 1000) {
       return
     }
-    actualFpsValue.textContent = (
-      actualFrameCount /
-      (elapsed / 1000)
-    ).toFixed(1)
+    panel.setActualFps((actualFrameCount / (elapsed / 1000)).toFixed(1))
     actualFrameCount = 0
     actualFpsWindowStart = timestamp
   }
