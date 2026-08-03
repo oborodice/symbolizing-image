@@ -19,6 +19,7 @@ import { loadFonts } from '../render/fonts'
 import { drawMatchedChars } from '../render/draw-matched-chars'
 import { drawMirroredCamera } from '../render/draw-mirrored-camera'
 import { fillCanvas } from '../render/fill-canvas'
+import { clearGlyphCache } from '../render/glyph-cache'
 import { PATTERN_SIZE } from '../config'
 
 interface Resolution {
@@ -138,6 +139,9 @@ export function renderDebugScreen(root: HTMLElement): void {
     video.height = height
     canvas.width = width
     canvas.height = height
+    // 解像度が変わるとブロックの高さ(→フォントサイズ)も変わり、それまでの
+    // グリフキャッシュが死蔵データになるため空にする
+    clearGlyphCache()
   }
 
   let fps = DEFAULT_FPS
@@ -185,6 +189,9 @@ export function renderDebugScreen(root: HTMLElement): void {
     (value) => {
       gridCols = value
       gridRows = deriveGridRows(value, camWidth, camHeight)
+      // グリッド数が変わるとブロックの高さ(→フォントサイズ)も変わり、それまでの
+      // グリフキャッシュが死蔵データになるため空にする
+      clearGlyphCache()
     },
   )
 

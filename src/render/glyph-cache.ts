@@ -151,6 +151,19 @@ function buildGlyph(char: string, fontString: FontString, color: string): Glyph 
 type GlyphCacheKey = string
 const glyphCache = new Map<GlyphCacheKey, Glyph | null>()
 
+// グリッド/解像度の変更でフォントサイズが変わると、それまでキャッシュしていた
+// グリフ・計測結果・アトラスページは(その設定に戻らない限り)二度と使われない
+// 死蔵データになる。破棄する仕組みが無いと無期限に増え続けるため、呼び出し側
+// (グリッド/解像度の変更箇所)からこの関数を呼んで空にする
+export function clearGlyphCache(): void {
+  glyphCache.clear()
+  inkMetricsCache.clear()
+  packPage = null
+  cursorX = 0
+  cursorY = 0
+  cursorRowHeight = 0
+}
+
 export function getGlyph(char: string, fontString: FontString, color: string): Glyph | null {
   const key = `${char} ${fontString} ${color}`
   const cached = glyphCache.get(key)
