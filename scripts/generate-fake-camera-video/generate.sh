@@ -6,7 +6,7 @@ set -eu
 # --use-file-for-fake-video-captureに渡すノイズ動画をここで生成する。
 # 動画自体はサイズが大きくなる(フルHD・15秒で数GB)ためgit管理せず、
 # このスクリプトで毎回同じコマンドで作り直す想定
-# 解像度の既定値はsrc/debug/screen.tsのDEFAULT_RESOLUTIONに合わせている。
+# 解像度の既定値はsrc/screen/index.tsのDEFAULT_RESOLUTIONに合わせている。
 # FPSは動画自身の更新頻度で、計測時のtarget-fps(MAX_FPS=30まで上げて上限を測ることが多い)
 # より低いと、描画ループが同じ映像フレームを重複して処理しキャッシュヒット率を
 # 底上げしてしまうため、MAX_FPS(30)に合わせて動画側も十分な頻度で更新されるようにする

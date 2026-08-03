@@ -1,6 +1,6 @@
 import './style.css'
-import { renderDebugScreen } from './debug/screen'
+import { renderScreen } from './screen'
 
 const app = document.querySelector<HTMLDivElement>('#app')!
 
-renderDebugScreen(app)
+renderScreen(app)

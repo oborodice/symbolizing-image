@@ -8,7 +8,7 @@ import {
   binarizeBlocks,
   type PatternBlock,
 } from '../pattern/pattern-block'
-import { bindRange, bindCheckbox } from './controls'
+import { bindRange, bindCheckbox } from '../controls'
 import {
   PATTERN_WORDS,
   loadPatternDb,
@@ -51,8 +51,8 @@ const DEFAULT_SHOW_GRID = false
 const DEFAULT_SHOW_CAMERA = true
 const DEFAULT_SHOW_CHARS = true
 
-export function renderDebugScreen(root: HTMLElement): void {
-  root.classList.add('debug-screen')
+export function renderScreen(root: HTMLElement): void {
+  root.classList.add('screen')
   root.innerHTML = `
     <video id="camera" autoplay playsinline muted hidden></video>
     <canvas id="preview"></canvas>

@@ -131,7 +131,7 @@ def print_process_event_breakdown(
 
 
 def print_user_timing_breakdown(trace_processor: TraceProcessor, window_start_ns: int, window_end_ns: int) -> None:
-    # src/debug/screen.tsのloop()内でperformance.mark/measureにより計測した
+    # src/screen/index.tsのloop()内でperformance.mark/measureにより計測した
     # 候補関数(drawMirroredCamera/extractPatternBlocks/binarizeBlocks/drawMatchedChars)ごとの内訳
     print("\n--- User Timing(performance.measure)別 ---")
     rows = trace_processor.query(f"""
