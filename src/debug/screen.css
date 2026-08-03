@@ -12,6 +12,18 @@
   flex-direction: column;
   gap: 8px;
   align-items: flex-start;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 40vh;
+  overflow-y: auto;
+  background: rgba(255, 204, 0, 0.85);
+  padding: 8px;
+}
+
+.controls[hidden] {
+  display: none;
 }
 
 #fps-value {

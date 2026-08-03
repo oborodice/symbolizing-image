@@ -56,7 +56,7 @@ export function renderDebugScreen(root: HTMLElement): void {
   root.innerHTML = `
     <video id="camera" autoplay playsinline muted hidden></video>
     <canvas id="preview"></canvas>
-    <div class="controls">
+    <div class="controls" hidden>
       <label>
         Resolution:
         <select id="resolution-select">
@@ -118,6 +118,14 @@ export function renderDebugScreen(root: HTMLElement): void {
   const gridSlider = root.querySelector<HTMLInputElement>('#grid-slider')!
   const gridValue = root.querySelector<HTMLSpanElement>('#grid-value')!
   const resetButton = root.querySelector<HTMLButtonElement>('#reset-button')!
+  const controls = root.querySelector<HTMLDivElement>('.controls')!
+
+  window.addEventListener('keydown', (event) => {
+    if (event.key.toLowerCase() === 'c') {
+      controls.hidden = !controls.hidden
+    }
+  })
+
   const packedBlock = new Uint32Array(PATTERN_WORDS)
   let patternDbRef: PatternDb | null = null
   void loadPatternDb().then((patternDb) => {
