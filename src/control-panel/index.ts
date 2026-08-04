@@ -132,6 +132,10 @@ export function renderControlPanel(
   const resetButton = panel.querySelector<HTMLButtonElement>('#reset-button')!
 
   window.addEventListener('keydown', (event) => {
+    // Cmd+C(コピー)等、修飾キーを伴うショートカットと衝突しないようにする
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return
+    }
     if (event.key.toLowerCase() === 'c') {
       panel.hidden = !panel.hidden
     }
