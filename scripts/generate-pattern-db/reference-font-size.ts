@@ -18,6 +18,13 @@ function measureInkRatio(
   return Math.max(inkWidth, inkHeight) / size
 }
 
+// 結合文字(梵字の母音記号等)は基底文字なしの単体では位置決めがフォントレンダラー任せになり、
+// 実際のラスタライズ結果(ひいてはfindReferenceFontSizeの収束結果)が環境によって大きく食い違う
+// (macOSとLinuxで検証済み)。基準文字としては使えないため、探索の対象から外す
+function isCombiningMark(char: string): boolean {
+  return /\p{M}/u.test(char)
+}
+
 // これが「同じフォントサイズを全文字で使う場合の、事実上のサイズ上限」を決める基準になる
 function findLargestChar(
   codePoints: number[],
@@ -33,6 +40,7 @@ function findLargestChar(
 
   for (const codePoint of codePoints) {
     const char = String.fromCodePoint(codePoint)
+    if (isCombiningMark(char)) continue
     const ratio = measureInkRatio(ctx, char, size)
     if (ratio > maxRatio) {
       maxRatio = ratio
