@@ -8,6 +8,7 @@ import {
   binarizeBlocks,
   type PatternBlock,
 } from '../pattern/pattern-block'
+import { computeMeanLuminanceThreshold } from '../binarize'
 import {
   PATTERN_WORDS,
   loadPatternDb,
@@ -63,11 +64,10 @@ export function renderScreen(root: HTMLElement): void {
     void startCamera(video, camWidth, camHeight)
   }
 
-  // 以下の状態(fps・binarizeThreshold・show*・gridCols/gridRows)は、いずれも
-  // 下のrenderControlPanelのcallbacksを通じてのみ更新される。パネル側が起動時に
-  // 一度デフォルト値でcallbacksを呼ぶため、ここでの初期値はプレースホルダーでよい
+  // 以下の状態(fps・show*・gridCols/gridRows)は、いずれも下のrenderControlPanelの
+  // callbacksを通じてのみ更新される。パネル側が起動時に一度デフォルト値でcallbacksを
+  // 呼ぶため、ここでの初期値はプレースホルダーでよい
   let fps = 0
-  let binarizeThreshold = 0
   let showCamera = false
   let showChars = false
   let showGrid = false
@@ -93,9 +93,6 @@ export function renderScreen(root: HTMLElement): void {
     },
     onFpsChange: (value) => {
       fps = value
-    },
-    onBinarizeThresholdChange: (value) => {
-      binarizeThreshold = value
     },
     onShowCameraChange: (value) => {
       showCamera = value
@@ -148,7 +145,9 @@ export function renderScreen(root: HTMLElement): void {
         gridCols,
         gridRows,
       )
-      binarizeBlocks(blocks, binarizeThreshold)
+      const threshold = computeMeanLuminanceThreshold(blocks)
+      panel.setBinarizeThreshold(threshold.toFixed(1))
+      binarizeBlocks(blocks, threshold)
     }
 
     if (!showCamera) {

@@ -23,10 +23,6 @@ const MIN_GRID_COLS = 10
 const MAX_GRID_COLS = 100
 const DEFAULT_GRID_COLS = 40
 
-const MIN_BINARIZE_THRESHOLD = 0
-const MAX_BINARIZE_THRESHOLD = 255
-const DEFAULT_BINARIZE_THRESHOLD = 128
-
 const DEFAULT_SHOW_GRID = false
 const DEFAULT_SHOW_CAMERA = true
 const DEFAULT_SHOW_CHARS = true
@@ -48,7 +44,6 @@ function formatGridLabel(
 export interface ControlPanelCallbacks {
   onResolutionChange: (width: number, height: number) => void
   onFpsChange: (fps: number) => void
-  onBinarizeThresholdChange: (threshold: number) => void
   onShowCameraChange: (show: boolean) => void
   onShowCharsChange: (show: boolean) => void
   onShowGridChange: (show: boolean) => void
@@ -57,6 +52,7 @@ export interface ControlPanelCallbacks {
 
 export interface ControlPanel {
   setActualFps(text: string): void
+  setBinarizeThreshold(text: string): void
 }
 
 export function renderControlPanel(
@@ -78,10 +74,7 @@ export function renderControlPanel(
         <input id="fps-slider" type="range" min="${MIN_FPS}" max="${MAX_FPS}" value="${DEFAULT_FPS}" />
       </label>
       <div>Actual FPS: <span id="actual-fps-value">-</span></div>
-      <label>
-        Binarize threshold: <span id="binarize-threshold-value">${DEFAULT_BINARIZE_THRESHOLD}</span>
-        <input id="binarize-threshold-slider" type="range" min="${MIN_BINARIZE_THRESHOLD}" max="${MAX_BINARIZE_THRESHOLD}" value="${DEFAULT_BINARIZE_THRESHOLD}" />
-      </label>
+      <div>Binarize threshold: <span id="binarize-threshold-value">-</span></div>
       <label>
         <input id="show-camera-toggle" type="checkbox" ${DEFAULT_SHOW_CAMERA ? 'checked' : ''} />
         Show camera
@@ -110,9 +103,6 @@ export function renderControlPanel(
   const fpsValue = panel.querySelector<HTMLSpanElement>('#fps-value')!
   const actualFpsValue = panel.querySelector<HTMLSpanElement>(
     '#actual-fps-value',
-  )!
-  const binarizeThresholdSlider = panel.querySelector<HTMLInputElement>(
-    '#binarize-threshold-slider',
   )!
   const binarizeThresholdValue = panel.querySelector<HTMLSpanElement>(
     '#binarize-threshold-value',
@@ -164,13 +154,6 @@ export function renderControlPanel(
 
   const setFps = bindRange(fpsSlider, fpsValue, String, callbacks.onFpsChange)
 
-  const setBinarizeThreshold = bindRange(
-    binarizeThresholdSlider,
-    binarizeThresholdValue,
-    String,
-    callbacks.onBinarizeThresholdChange,
-  )
-
   const setShowCamera = bindCheckbox(
     showCameraToggle,
     callbacks.onShowCameraChange,
@@ -200,7 +183,6 @@ export function renderControlPanel(
     selectResolution(RESOLUTION_PRESETS.indexOf(DEFAULT_RESOLUTION))
     setFps(DEFAULT_FPS)
     setGridCols(DEFAULT_GRID_COLS)
-    setBinarizeThreshold(DEFAULT_BINARIZE_THRESHOLD)
     setShowCamera(DEFAULT_SHOW_CAMERA)
     setShowChars(DEFAULT_SHOW_CHARS)
     setShowGrid(DEFAULT_SHOW_GRID)
@@ -215,6 +197,9 @@ export function renderControlPanel(
   return {
     setActualFps(text: string): void {
       actualFpsValue.textContent = text
+    },
+    setBinarizeThreshold(text: string): void {
+      binarizeThresholdValue.textContent = text
     },
   }
 }
