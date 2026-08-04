@@ -22,10 +22,16 @@ const DEFAULT_FPS = 15
 const MIN_GRID_COLS = 10
 const MAX_GRID_COLS = 100
 const DEFAULT_GRID_COLS = 40
+const GRID_COLS_STEP = 10
 
 const DEFAULT_SHOW_GRID = false
 const DEFAULT_SHOW_CAMERA = true
 const DEFAULT_SHOW_CHARS = true
+
+// 展示中、解像度・要求FPSは固定のまま、show cameraとグリッド数だけをランダムに
+// 自動で切り替え続けるモード
+const DEFAULT_EXHIBITION_MODE = false
+const EXHIBITION_INTERVAL_MS = 10000
 
 function formatGridLabel(
   camWidth: number,
@@ -91,6 +97,10 @@ export function renderControlPanel(
         Grid: <span id="grid-value">${formatGridLabel(DEFAULT_RESOLUTION.width, DEFAULT_RESOLUTION.height, DEFAULT_GRID_COLS, deriveGridRows(DEFAULT_GRID_COLS, DEFAULT_RESOLUTION.width, DEFAULT_RESOLUTION.height))}</span>
         <input id="grid-slider" type="range" min="${MIN_GRID_COLS}" max="${MAX_GRID_COLS}" value="${DEFAULT_GRID_COLS}" />
       </label>
+      <label>
+        <input id="exhibition-mode-toggle" type="checkbox" ${DEFAULT_EXHIBITION_MODE ? 'checked' : ''} />
+        Exhibition mode
+      </label>
       <button id="reset-button" type="button">Reset parameters</button>
     </div>
   `
@@ -116,6 +126,9 @@ export function renderControlPanel(
   const gridToggle = panel.querySelector<HTMLInputElement>('#grid-toggle')!
   const gridSlider = panel.querySelector<HTMLInputElement>('#grid-slider')!
   const gridValue = panel.querySelector<HTMLSpanElement>('#grid-value')!
+  const exhibitionModeToggle = panel.querySelector<HTMLInputElement>(
+    '#exhibition-mode-toggle',
+  )!
   const resetButton = panel.querySelector<HTMLButtonElement>('#reset-button')!
 
   window.addEventListener('keydown', (event) => {
@@ -179,6 +192,42 @@ export function renderControlPanel(
     callbacks.onGridColsChange,
   )
 
+  // 展示モード中はshow cameraとグリッド数を自動で切り替え続けるため、
+  // 手動での変更(操作ミス・意図しない上書き)を避けるためUIごと無効化する
+  let exhibitionIntervalId: ReturnType<typeof setInterval> | null = null
+
+  function randomGridCols(): number {
+    const stepCount = (MAX_GRID_COLS - MIN_GRID_COLS) / GRID_COLS_STEP + 1
+    return MIN_GRID_COLS + GRID_COLS_STEP * Math.floor(Math.random() * stepCount)
+  }
+
+  function applyRandomExhibitionStep(): void {
+    setShowCamera(Math.random() < 0.5)
+    setGridCols(randomGridCols())
+  }
+
+  function setExhibitionMode(enabled: boolean): void {
+    exhibitionModeToggle.checked = enabled
+    showCameraToggle.disabled = enabled
+    gridSlider.disabled = enabled
+
+    if (exhibitionIntervalId !== null) {
+      clearInterval(exhibitionIntervalId)
+      exhibitionIntervalId = null
+    }
+    if (enabled) {
+      applyRandomExhibitionStep()
+      exhibitionIntervalId = setInterval(
+        applyRandomExhibitionStep,
+        EXHIBITION_INTERVAL_MS,
+      )
+    }
+  }
+
+  exhibitionModeToggle.addEventListener('change', () => {
+    setExhibitionMode(exhibitionModeToggle.checked)
+  })
+
   function applyDefaults(): void {
     selectResolution(RESOLUTION_PRESETS.indexOf(DEFAULT_RESOLUTION))
     setFps(DEFAULT_FPS)
@@ -186,6 +235,7 @@ export function renderControlPanel(
     setShowCamera(DEFAULT_SHOW_CAMERA)
     setShowChars(DEFAULT_SHOW_CHARS)
     setShowGrid(DEFAULT_SHOW_GRID)
+    setExhibitionMode(DEFAULT_EXHIBITION_MODE)
   }
 
   resetButton.addEventListener('click', applyDefaults)
